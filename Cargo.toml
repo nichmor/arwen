@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = ["crates/arwen-write"]
+
+# members = [
+#     "crates/arwen",
+# ]
+
+[workspace.package]
+authors = ["nichita morcotilo <nmorkotilo@gmail.com>"]
+edition = "2021"
+homepage = "https://github.com/nichmor/arwen"
+license = "BSD-3-Clause"
+readme = "README.md"
+repository = "https://github.com/nichmor/arwen"
+
+[package]
+authors.workspace = true
+description = "A package management and workflow tool"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "pixi"
+readme.workspace = true
+repository.workspace = true
+version = "0.35.0"
+
+[workspace.dependencies]
+# goblin = { version = "0.9.2", features = ["mach64"] }
+
+goblin = { path = "../goblin-1", features = ["mach64"] }
+object = { version = "0.36.5", features = ["write"] }
+
+
+[dependencies]
+goblin = { workspace = true }
+object = { workspace = true }
+scroll = "0.12.0"
