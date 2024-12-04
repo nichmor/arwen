@@ -1,137 +1,161 @@
 use std::mem;
 
-use goblin::mach::{header::Header64, load_command::{Section64, SegmentCommand32, SegmentCommand64, LC_DYSYMTAB, LC_SEGMENT, LC_SEGMENT_64, SIZEOF_SECTION_64, SIZEOF_SEGMENT_COMMAND_64}, segment::{self, Segment}, MachO};
-use scroll::{Pread, Pwrite, SizeWith};
+use goblin::mach::{header::{self, Header, Header64, SIZEOF_HEADER_64}, load_command::{self, RpathCommand, Section64, SegmentCommand32, SegmentCommand64, LC_DYSYMTAB, LC_RPATH, LC_SEGMENT, LC_SEGMENT_64, SIZEOF_RPATH_COMMAND, SIZEOF_SECTION_64, SIZEOF_SEGMENT_COMMAND_64}, segment::{self, Segment}, MachO};
+use scroll::{ctx::SizeWith, Pread, Pwrite, SizeWith};
 
 use goblin::mach::load_command::CommandVariant::*;
 
+
+fn modify_rpath(mut parsed_macho: MachO) -> Vec<u8> {
+
+    // let's find existing LC_RPATH
+    for load_command in &parsed_macho.load_commands {
+        match load_command.command {
+            Rpath(rpath) => {
+                let existing_offset = load_command.offset;
+                // write graf_path
+                let mut existing_data = parsed_macho.data.to_vec();
+                eprintln!("existing rpath size {:?}", rpath.path as usize);
+                existing_data.pwrite("graf_path", existing_offset + rpath.path as usize).unwrap();
+
+                return existing_data;
+            },
+            _ => {}
+        }
+    }
+
+    return parsed_macho.data.to_vec();
+
+}
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     // let write_obj = Object::new(object::BinaryFormat::MachO, object::Architecture::Arm, Endianness::default());
 
-
-
-
     let bytes_of_file = std::fs::read(&args[1]).unwrap();
 
+    // modify rpath
+    // let bytes_of_file: Vec<u8> = modify_rpath(MachO::parse(&bytes_of_file, 0).unwrap());
+
+
+    // let's calculate the total size of all the header and commands
     let parsed_macho = MachO::parse(&bytes_of_file, 0).unwrap();
 
-    eprintln!("all data size {:?}", parsed_macho.data.len());
 
-    
-    let header_64: Header64 = parsed_macho.header.into();
+    let mut total_size = 0;
 
+    let mut initial_offset = 0;
 
+    let mut buffer = vec![0u8; parsed_macho.data.len()];
 
+    let mut header = parsed_macho.header;
+    header.ncmds += 1;
+    // header.sizeofcmds -= SIZEOF_RPATH_COMMAND as u32;
 
-    eprintln!("header sizeofcmds {:?}", header_64.sizeofcmds);
+    eprintln!("header size {:?}", header);
 
+    // let wroted = buffer.pwrite(header, initial_offset).unwrap();
 
-
-
-    let mut buffer = vec![0u8; header_64.size()];
-
-
-    let mut real_buffer = Vec::new();
-
-    let mut offset = 0;
-
-    // Writing header
-    buffer.pwrite(header_64, 0).unwrap();
-
-    // real_buffer.extend_from_slice(&buffer.clone());
-
-    real_buffer.push(buffer.clone());
+    eprintln!("all segments are {:?}", parsed_macho.segments);
 
 
-    offset += header_64.size();
+    // let's start with load commands
+    // initial_offset += wroted;
 
-    let all_segments = parsed_macho.segments;
-    let mut sgm_index = 0;
+    for load_command in parsed_macho.load_commands {        
+        match load_command.command {
+            Segment64(segment_command64) => {                
+                let wroted = buffer.pwrite(segment_command64, load_command.offset).unwrap();
+                eprintln!("segment name {:?}", segment_command64.name());
+                eprintln!("at the offset {:?}", load_command.offset);
 
-    // Write only segments
+                let fileoff = if segment_command64.fileoff < wroted as u64{
+                    wroted - segment_command64.fileoff as usize
+                } else {
+                    segment_command64.fileoff as usize
+                };
 
-    // writing segments
-    // Writing segments and sections
-    for segment in &all_segments {
-        eprintln!("SEGMENT: {:?}", segment);
+                eprintln!("segment data starts at {:?} and ends at {:?}", segment_command64.fileoff, segment_command64.fileoff + segment_command64.filesize);
 
-        // Write the segment header
-        let mut buffer = vec![0u8; SIZEOF_SEGMENT_COMMAND_64];
-        let segment_command = SegmentCommand64 {
-            cmd: segment.cmd,
-            cmdsize: segment.cmdsize,
-            segname: segment.segname,
-            vmaddr: segment.vmaddr,
-            vmsize: segment.vmsize,
-            fileoff: segment.fileoff,
-            filesize: segment.filesize,
-            maxprot: segment.maxprot,
-            initprot: segment.initprot,
-            nsects: segment.nsects,
-            flags: segment.flags,
-        };
 
-        // Write the segment header to the buffer
-        let wrote = buffer.pwrite(segment_command, 0).unwrap();
-        eprintln!("Segment header size: {}, wrote: {}", buffer.len(), wrote);
-        real_buffer.push(buffer.clone());
 
-        // Write each section in the segment
-        for (section, data) in segment.sections().unwrap() {
-            eprintln!("SECTION: {:?}", section);
+                // and also write the data of segment
+                let segment_bytes = parsed_macho.data[fileoff as usize..(fileoff as u64 + segment_command64.filesize) as usize].to_vec();
+                let wroted = buffer.pwrite(segment_bytes.as_slice(), fileoff as usize).unwrap();
 
-            let section_64 = Section64 {
-                sectname: section.sectname,
-                segname: section.segname,
-                addr: section.addr,
-                size: section.size,
-                offset: section.offset,
-                align: section.align,
-                reloff: section.reloff,
-                nreloc: section.nreloc,
-                flags: section.flags,
-                reserved1: 0,
-                reserved2: 0,
-                reserved3: 0,
-            };
-
-            // Write section header
-            let mut section_buffer = vec![0u8; SIZEOF_SECTION_64];
-            let wrote = section_buffer.pwrite(section_64, 0).unwrap();
-            eprintln!("Section header size: {}, wrote: {}", section_buffer.len(), wrote);
-            real_buffer.push(section_buffer.clone());
-
-            // Align the section data if necessary
-            let align_mask = (1 << section.align) - 1;
-            if real_buffer.len() & align_mask != 0 {
-                let padding = align_mask - (real_buffer.len() & align_mask);
-                eprintln!("Adding padding of {} bytes for alignment", padding);
-                let padding_vec = vec![0u8; padding];
+                // initial_offset += wroted;
+            },
+            Rpath(rpath_command) => {
+                // duplicate it
                 
-                real_buffer.push(padding_vec);
+                dbg!(rpath_command);
+
+                let raw_str = c"costesti_bratka";
+                let raw_str_size = raw_str.count_bytes();
+                // and make it divible by 4
+                let raw_str_size =  ((raw_str_size + 1 + 3) / 4) * 4;
+
+                let cmd_size = SIZEOF_RPATH_COMMAND as u32 + raw_str_size as u32;
+                let cmd_size =  ((cmd_size + 1 + 3) / 4) * 4;
+
+
+
+                let new_rpath = RpathCommand{
+                    cmd: LC_RPATH,
+                    cmdsize: cmd_size,
+                    path: raw_str_size as u32,
+                };
+
+                dbg!(new_rpath);
+                
+
+                eprintln!("rpath command is at {:?} offset", load_command.offset);
+                // let's remove it
+                let size_of_rpath = new_rpath.cmdsize;
+                header.sizeofcmds += size_of_rpath;
+
+                eprintln!("size of cmds {:?}", header.sizeofcmds);
+
+                let mut rpath_buffer = vec![0u8; raw_str_size as usize];
+                rpath_buffer.fill(0);
+
+                // write the raw string and then fill it with zero bytes
+                rpath_buffer.pwrite(raw_str, 0).unwrap();
+                
+                dbg!(raw_str_size);
+                dbg!(rpath_buffer.len());
+                dbg!(&rpath_buffer);
+
+                // fill entire buffer with ending zero
+                buffer.pwrite(new_rpath, load_command.offset + rpath_command.cmdsize as usize).unwrap();
+
+                // write the path itself
+                buffer.pwrite(rpath_buffer.clone().as_slice(), load_command.offset + rpath_command.cmdsize  as usize + rpath_command.path as usize).unwrap();
+
+                // buffer.pwrite(rpath_buffer.as_slice(), load_command.offset).unwrap();
+                // write the header back
+                let wroted = buffer.pwrite(header, initial_offset).unwrap();
+            },
+
+            _ => {
+                eprintln!("skipping for now");
             }
-
-            // Write the section data
-            real_buffer.push(data.to_vec());
         }
-
-        // Write segment data (if any)
-        if !segment.data.is_empty() {
-            eprintln!("Writing segment data, size: {}", segment.data.len());
-            real_buffer.push(segment.data.to_vec());
-        }
+        
+        
+        // let wroted = buffer.pwrite(load_command.command, initial_offset).unwrap();
+        // initial_offset += wroted;
     }
 
-    
 
-    // write load commands
-    // Real trick here is that if we hit load_segment,
-    // we need to write it separately and then write the sections
+    // panic!();
+
+    
+    // // write load commands
     // for load_command in parsed_macho.load_commands {
-    //     let mut buffer = vec![0u8; load_command.command.cmdsize()];
+    //     let mut cmd_buffer = vec![0u8; load_command.command.cmdsize()];
+
         
     //     match load_command.command {
     //         Segment32(segment_command32) => {
@@ -139,6 +163,11 @@ fn main() {
     //             eprintln!("WE HAD THIS ONE");
     //         },
     //         Segment64(segment_command64) => {
+    //             // write load command
+    //             // buffer.pwrite(segment_command64, 0).unwrap();
+    //             // real_buffer.push(buffer.clone());
+
+                
     //             let segment = &all_segments[sgm_index];
     //             let cloned_seg = SegmentCommand64{
     //                 cmd: segment.cmd,
@@ -153,8 +182,8 @@ fn main() {
     //                 nsects: segment.nsects,
     //                 flags: segment.flags,
     //             };
-    //             let mut buffer = vec![0u8; SIZEOF_SEGMENT_COMMAND_64];
-    //             buffer.pwrite(cloned_seg, 0).unwrap();
+    //             // let mut buffer = vec![0u8; SIZEOF_SEGMENT_COMMAND_64];
+    //             cmd_buffer.pwrite(cloned_seg, 0).unwrap();
     //             real_buffer.push(buffer.clone());
         
     //             // now write sections
@@ -168,7 +197,7 @@ fn main() {
     //                 buffer.pwrite(section_as_64, 0).unwrap();
     //                 eprintln!("buffer is {:?}", buffer);
         
-    //                 // real_buffer.push(buffer.clone());
+    //                 real_buffer.push(buffer.clone());
     //                 // real_buffer.push(data.to_vec());
         
     //             }
@@ -343,26 +372,26 @@ fn main() {
     //         _ => unimplemented!("Not implemented"),
     //     }
         
-        
-    //     // buffer.pwrite(load_command.command, offset).unwrap();
-
-    //     real_buffer.push(buffer.clone());
-    //     // break;
-        
-    //     // buffer.clear();
-        
-    //     // offset += offset + load_command.command.cmdsize();
     // }
+    // //     // buffer.pwrite(load_command.command, offset).unwrap();
 
-    eprintln!("TOTAL SEGMENTS {:?}", all_segments.len());
+    // //     real_buffer.push(buffer.clone());
+    // //     // break;
+        
+    // //     // buffer.clear();
+        
+    // //     // offset += offset + load_command.command.cmdsize();
+    // // }
 
-    eprintln!("USED {:?}", sgm_index);
-    let buffer_concat = real_buffer.concat();
+    // eprintln!("TOTAL SEGMENTS {:?}", all_segments.len());
 
-    // eprintln!("real buffer is {:?}", buffer_concat);
+    // eprintln!("USED {:?}", sgm_index);
+    // let buffer_concat = real_buffer.concat();
 
-    // write back into a binary file
-    std::fs::write("new_binary", buffer_concat).unwrap();
+    // // eprintln!("real buffer is {:?}", buffer_concat);
+
+    // // write back into a binary file
+    std::fs::write("hello_with_removed", buffer).unwrap();
 
 
 
