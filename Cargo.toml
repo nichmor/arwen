@@ -1,38 +1,39 @@
 [workspace]
 resolver = "2"
-members = ["crates/arwen-write"]
+# members = ["crates/arwen-write"]
 
-# members = [
-#     "crates/arwen",
-# ]
 
 [workspace.package]
 authors = ["nichita morcotilo <nmorkotilo@gmail.com>"]
 edition = "2021"
 homepage = "https://github.com/nichmor/arwen"
-license = "BSD-3-Clause"
+license = "MIT"
 readme = "README.md"
 repository = "https://github.com/nichmor/arwen"
+categories = ["parsing", "development-tools::debugging"]
 
 [package]
 authors.workspace = true
-description = "A package management and workflow tool"
+description = "A cross-platform, Mach-O and ELF utility to modify installs paths for dynamic libraries or executables."
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-name = "pixi"
+name = "arwen"
 readme.workspace = true
 repository.workspace = true
-version = "0.35.0"
+version = "0.0.1"
 
 [workspace.dependencies]
-# goblin = { version = "0.9.2", features = ["mach64"] }
+goblin = { version = "0.9.2", features = ["mach64"] }
 
-goblin = { path = "../goblin-1", features = ["mach64"] }
+# goblin = { path = "../goblin-1", features = ["mach64"] }
 object = { version = "0.36.5", features = ["write"] }
 
 
 [dependencies]
+clap = { version = "4.5.26", features = ["derive"] }
 goblin = { workspace = true }
+insta = "1.42.0"
+miette = "7.4.0"
 object = { workspace = true }
 scroll = "0.12.0"

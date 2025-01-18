@@ -1,1 +1,14 @@
-target/*
+/target
+.idea
+.vscode
+.test-projects
+__pycache__
+.pixi
+.build
+.DS_store
+site/
+.cache
+pytest-temp
+.bundle
+# ruby stuff
+vendor

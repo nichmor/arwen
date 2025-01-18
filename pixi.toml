@@ -1,0 +1,26 @@
+[project]
+authors = ["nichmor <nmorkotilo@gmail.com>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "arwen"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+
+[dependencies]
+rust = "~=1.81.0"
+ruby = "~=3.4.1"
+
+
+[tasks]
+build-debug = "cargo build"
+build-release = "cargo build --release"
+install = "cargo install --path . --locked"
+
+ruby-install = "bundle install"
+
+
+run-ruby-macho = { cmd = "bundle exec ruby tools/ruby/ruby.rb", cwd = "tools/ruby" }
+
+build-dylib = { cmd = "clang -dynamiclib -o libmylib.dylib mylib.c", cwd = "tools/clang" }
+build-bin-with-dylib = { cmd = "clang -o main main.c -L. -lmylib", cwd = "tools/clang" }

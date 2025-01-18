@@ -1,0 +1,14 @@
+---
+source: tests/test_rpath.rs
+expression: changed_rpath
+---
+LoadCommand {
+    offset: 1088,
+    command: Rpath(
+        RpathCommand {
+            cmd: 2147483676,
+            cmdsize: 64,
+            path: 12,
+        },
+    ),
+}

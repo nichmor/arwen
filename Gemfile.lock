@@ -1,0 +1,14 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ruby-macho (4.1.0)
+
+PLATFORMS
+  arm64-darwin-20
+  ruby
+
+DEPENDENCIES
+  ruby-macho
+
+BUNDLED WITH
+   2.6.2
