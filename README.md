@@ -1,6 +1,7 @@
 [![Pixi Badge][pixi-badge]][pixi-url]
 
 [pixi-badge]:https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json&style=flat-square
+[pixi-url]: https://pixi.sh
 
 # arwen: patching Macho and ELF binaries in rust.
 
