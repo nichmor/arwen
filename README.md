@@ -31,4 +31,3 @@ Options:
 ## Status
 
 `arwen` is currently in active development and provides only `install_name_tool` implementation. `API` and `CLI` are subject to change to accommodate a more user-friendly experience.
-
