@@ -1,0 +1,7 @@
+---
+source: tests/test_rpath.rs
+expression: changed_macho.rpaths
+---
+[
+    "abababababababababababaabbababababababababab",
+]
