@@ -8,8 +8,8 @@ MachO {
         cputype: 16777228,
         cpusubtype: 0x0,
         filetype: "EXECUTE",
-        ncmds: 18,
-        sizeofcmds: 1112,
+        ncmds: 19,
+        sizeofcmds: 1144,
         flags: 0x200085,
         reserved: 0x0,
     },
@@ -340,7 +340,17 @@ MachO {
             command: Rpath(
                 RpathCommand {
                     cmd: 2147483676,
-                    cmdsize: 56,
+                    cmdsize: 24,
+                    path: 12,
+                },
+            ),
+        },
+        LoadCommand {
+            offset: 1112,
+            command: Rpath(
+                RpathCommand {
+                    cmd: 2147483676,
+                    cmdsize: 64,
                     path: 12,
                 },
             ),

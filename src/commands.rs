@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use crate::utils::align_to_4;
+use crate::utils::align_to_arch;
 
 use goblin::mach::load_command::{
     Dylib, DylibCommand, RpathCommand, LC_RPATH, SIZEOF_RPATH_COMMAND,
@@ -27,10 +27,10 @@ impl RpathCommandBuilder {
         let raw_str_size = raw_c_str.count_bytes();
 
         // and make it aligned by 4
-        let raw_str_size = align_to_4(raw_str_size);
+        let raw_str_size = align_to_arch(raw_str_size);
 
         let cmd_size = SIZEOF_RPATH_COMMAND as u32 + raw_str_size as u32;
-        let cmd_size = align_to_4(cmd_size as usize);
+        let cmd_size = align_to_arch(cmd_size as usize);
 
         let new_rpath = RpathCommand {
             cmd: LC_RPATH,
@@ -75,14 +75,13 @@ impl DlibCommandBuilder {
         let raw_str_size = raw_c_str.count_bytes();
 
         // and make it aligned by 4
-        let raw_str_size = align_to_4(raw_str_size);
+        let raw_str_size = align_to_arch(raw_str_size);
 
         // TODO: we should use SIZEOF_DYLIB_COMMAND directly, but it's not in the right size for some reason.
         // it should be 24 instead of 20.
-        // let cmd_size = SIZEOF_DYLIB_COMMAND as u32 + raw_str_size as u32 + SIZEOF_DYLIB as u32;
         let cmd_size = 24_u32 + raw_str_size as u32;
 
-        let cmd_size = align_to_4(cmd_size as usize);
+        let cmd_size = align_to_arch(cmd_size as usize);
 
         let dylib = Dylib {
             name: 24_u32,
