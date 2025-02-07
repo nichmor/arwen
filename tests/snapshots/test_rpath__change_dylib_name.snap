@@ -9,7 +9,7 @@ MachO {
         cpusubtype: 0x0,
         filetype: "EXECUTE",
         ncmds: 18,
-        sizeofcmds: 1112,
+        sizeofcmds: 1096,
         flags: 0x200085,
         reserved: 0x0,
     },
@@ -292,7 +292,7 @@ MachO {
             command: LoadDylib(
                 DylibCommand {
                     cmd: 12,
-                    cmdsize: 56,
+                    cmdsize: 72,
                     dylib: Dylib {
                         name: 24,
                         timestamp: 2,
@@ -303,7 +303,7 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 1040,
+            offset: 1056,
             command: FunctionStarts(
                 LinkeditDataCommand {
                     cmd: 38,
@@ -314,7 +314,7 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 1056,
+            offset: 1072,
             command: DataInCode(
                 LinkeditDataCommand {
                     cmd: 41,
@@ -325,7 +325,7 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 1072,
+            offset: 1088,
             command: CodeSignature(
                 LinkeditDataCommand {
                     cmd: 29,
@@ -336,11 +336,11 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 1088,
+            offset: 1104,
             command: Rpath(
                 RpathCommand {
                     cmd: 2147483676,
-                    cmdsize: 56,
+                    cmdsize: 24,
                     path: 12,
                 },
             ),
@@ -479,7 +479,7 @@ MachO {
     old_style_entry: false,
     libs: [
         "self",
-        "/usr/lib/libSystem.B.dylib",
+        "very_very_very_very_very_very_very_longid",
     ],
     name: None,
     little_endian: true,

@@ -20,7 +20,7 @@ install = "cargo install --path . --locked"
 ruby-install = "bundle install"
 
 
-run-ruby-macho = { cmd = "bundle exec ruby tools/ruby/ruby.rb", cwd = "tools/ruby" }
+run-ruby-macho = { cmd = "bundle exec ruby ruby.rb", cwd = "tools/ruby" }
 
 build-dylib = { cmd = "clang -dynamiclib -o libmylib.dylib mylib.c", cwd = "tools/clang" }
 build-bin-with-dylib = { cmd = "clang -o main main.c -L. -lmylib", cwd = "tools/clang" }

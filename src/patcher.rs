@@ -6,13 +6,14 @@ use goblin::mach::{
     load_command::{self, LoadCommand, RpathCommand},
     MachO,
 };
+
+// use goblin::mach::Mach
 use scroll::Pwrite;
 
 use crate::commands::{DlibCommandBuilder, RpathCommandBuilder};
 
 /// Change the rpath of a Mach-O file.
 pub fn change_rpath(bytes_of_file: Vec<u8>, old_rpath: String, new_rpath: String) -> Vec<u8> {
-    // let's calculate the total size of all the header and commands
     let parsed_macho = MachO::parse(&bytes_of_file, 0).unwrap();
 
     // TODO: goblin doesn't export parsed data
