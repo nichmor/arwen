@@ -7,6 +7,7 @@ pub fn align_to_arch(size: usize) -> usize {
         // ((size + 1 + 3) / 4) * 4
         size.next_multiple_of(8)
     } else {
+        // TODO: remove the pannic and return a Result
         panic!("Unsupported architecture")
     }
 }

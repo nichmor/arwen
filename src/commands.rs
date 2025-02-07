@@ -74,22 +74,14 @@ impl DlibCommandBuilder {
         let raw_c_str = CStr::from_bytes_with_nul(raw_c_str_tmplt.as_bytes()).unwrap();
         let raw_str_size = raw_c_str.count_bytes();
 
-        eprintln!("raw_str_size: {}", raw_str_size);
         // and make it aligned by 4
         let raw_str_size = align_to_arch(raw_str_size);
 
-        eprintln!("aligned raw_str_size: {}", raw_str_size);
-
         // TODO: we should use SIZEOF_DYLIB_COMMAND directly, but it's not in the right size for some reason.
         // it should be 24 instead of 20.
-        // let cmd_size = SIZEOF_DYLIB_COMMAND as u32 + raw_str_size as u32 + SIZEOF_DYLIB as u32;
         let cmd_size = 24_u32 + raw_str_size as u32;
 
-        eprintln!("unalign cmd_size: {}", cmd_size);
-
         let cmd_size = align_to_arch(cmd_size as usize);
-
-        eprintln!("align cmd_size: {}", cmd_size);
 
         let dylib = Dylib {
             name: 24_u32,
