@@ -7,7 +7,7 @@ use goblin::mach::{
     MachO,
 };
 
-// use goblin::mach::Mach
+
 use scroll::Pwrite;
 
 use crate::commands::{DlibCommandBuilder, RpathCommandBuilder};
