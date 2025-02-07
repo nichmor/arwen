@@ -1,0 +1,7 @@
+---
+source: tests/x32/test_patching.rs
+expression: changed_macho.rpaths
+---
+[
+    "path_graf_path_graf_path_graf_path_graf",
+]

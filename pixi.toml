@@ -22,5 +22,10 @@ ruby-install = "bundle install"
 
 run-ruby-macho = { cmd = "bundle exec ruby ruby.rb", cwd = "tools/ruby" }
 
-build-dylib = { cmd = "clang -dynamiclib -o libmylib.dylib mylib.c", cwd = "tools/clang" }
-build-bin-with-dylib = { cmd = "clang -o main main.c -L. -lmylib", cwd = "tools/clang" }
+# build x64 versions
+# building x32 versions is not supported on macOS after Xcode 9.4/9.4.1
+# so most probably you will not be able to build x32 versions on your new macOS.
+# to overcome this, we ship some x32 versions of different binaries nearby the x64 ones.
+# If you think you are able to build x32 versions, just use -m32 instead of -m64.
+build-dylib-x64 = { cmd = "clang -dynamiclib -m64 -o x64/libmylib.dylib mylib.c", cwd = "tools/clang" }
+build-bin-with-dylib-x64 = { cmd = "clang -m64 -o x64/main main.c -L x64 -lmylib", cwd = "tools/clang", depends-on = ["build-dylib-x64"] }

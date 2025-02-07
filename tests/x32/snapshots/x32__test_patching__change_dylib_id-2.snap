@@ -1,0 +1,7 @@
+---
+source: tests/x32/test_patching.rs
+expression: changed_macho.name
+---
+Some(
+    "very_very_very_very_very_very_very_longid.dylib",
+)
