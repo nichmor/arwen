@@ -1,0 +1,7 @@
+---
+source: tests/fat/test_patching.rs
+expression: changed_macho.rpaths
+---
+[
+    "made_up_path",
+]

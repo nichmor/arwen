@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::patcher::remove_rpath;
+use crate::macho::MachoContainer;
+
+// use crate::patcher::remove_rpath;
 
 /// Remove a run path
 #[derive(Parser, Debug)]
@@ -19,12 +21,14 @@ pub struct Args {
 pub fn execute(args: Args) {
     let bytes_of_file = std::fs::read(&args.path).unwrap();
 
-    let changed_buffer = remove_rpath(bytes_of_file, args.rpath);
+    let mut macho = MachoContainer::parse(&bytes_of_file);
+
+    macho.remove_rpath(&args.rpath);
 
     let new_path = args.path.with_file_name(format!(
         "{}_no_rpath",
         args.path.file_name().unwrap().to_str().unwrap()
     ));
 
-    std::fs::write(new_path, changed_buffer).unwrap();
+    std::fs::write(new_path, macho.data).unwrap();
 }

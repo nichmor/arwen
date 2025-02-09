@@ -28,4 +28,7 @@ run-ruby-macho = { cmd = "bundle exec ruby ruby.rb", cwd = "tools/ruby" }
 # to overcome this, we ship some x32 versions of different binaries nearby the x64 ones.
 # If you think you are able to build x32 versions, just use -m32 instead of -m64.
 build-dylib-x64 = { cmd = "clang -dynamiclib -m64 -o x64/libmylib.dylib mylib.c", cwd = "tools/clang" }
+build-dylib-x86_64 = { cmd = "clang -dynamiclib -arch x86_64 -o x86_64/libmylib.dylib mylib.c", cwd = "tools/clang" }
+build-dylib-fat = { cmd = "lipo -create tools/clang/x64/libmylib.dylib tools/clang/x86_64/libmylib.dylib -output tools/clang/fat" }
+
 build-bin-with-dylib-x64 = { cmd = "clang -m64 -o x64/main main.c -L x64 -lmylib", cwd = "tools/clang", depends-on = ["build-dylib-x64"] }
