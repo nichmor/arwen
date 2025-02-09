@@ -1,6 +1,4 @@
-use arwen::patcher::{
-    add_rpath, change_install_id, change_install_name, change_rpath, remove_rpath,
-};
+use arwen::macho::MachoContainer;
 use goblin::mach::MachO;
 use std::path::PathBuf;
 
@@ -13,19 +11,16 @@ fn test_rpath_change() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    // we try to change the rpath of the file to something longer
-    let changed = change_rpath(
-        data_bytes,
-        "path_graf".to_string(),
-        "path_graf_path_graf_path_graf_path_graf".to_string(),
-    );
+    let mut macho_container = MachoContainer::parse(&data_bytes);
 
-    let changed_macho = MachO::parse(&changed, 0).unwrap();
+    macho_container.change_rpath("path_graf", "path_graf_path_graf_path_graf_path_graf");
+
+    let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
     insta::assert_debug_snapshot!(changed_macho);
     insta::assert_debug_snapshot!(changed_macho.rpaths);
 
-    insta::assert_snapshot!(changed.len(), @"49120");
+    insta::assert_snapshot!(macho_container.data.len(), @"49120");
 }
 
 /// This test checks if the rpath of a Mach-O file can be removed.
@@ -37,14 +32,16 @@ fn test_rpath_remove() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    // we try to change the rpath of the file to something longer
-    let changed = remove_rpath(data_bytes, "path_graf".to_string());
+    let mut macho_container = MachoContainer::parse(&data_bytes);
 
-    let changed_macho = MachO::parse(&changed, 0).unwrap();
+    // we try to change the rpath of the file to something longer
+    macho_container.remove_rpath("path_graf");
+
+    let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
     insta::assert_debug_snapshot!(changed_macho);
     insta::assert_debug_snapshot!(changed_macho.rpaths);
-    insta::assert_snapshot!(changed.len(), @"33440");
+    insta::assert_snapshot!(macho_container.data.len(), @"33440");
 }
 
 /// This test verify that a rpath can be added to a Mach-O file.
@@ -56,17 +53,16 @@ fn test_rpath_add() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    // we try to change the rpath of the file to something longer
-    let changed = add_rpath(
-        data_bytes,
-        "abababababababababababaabbababababababababab".to_string(),
-    );
+    let mut macho_container = MachoContainer::parse(&data_bytes);
 
-    let changed_macho = MachO::parse(&changed, 0).unwrap();
+    // we try to change the rpath of the file to something longer
+    macho_container.add_rpath("abababababababababababaabbababababababababab");
+
+    let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
     insta::assert_debug_snapshot!(changed_macho);
     insta::assert_debug_snapshot!(changed_macho.rpaths);
-    insta::assert_snapshot!(changed.len(), @"33440");
+    insta::assert_snapshot!(macho_container.data.len(), @"33440");
 }
 
 /// This test verify that an dylib id can be changed in a Mach-O file.
@@ -78,17 +74,16 @@ fn test_change_dylib_id() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    // we try to change the rpath of the file to something longer
-    let changed = change_install_id(
-        data_bytes,
-        "very_very_very_very_very_very_very_longid.dylib".to_string(),
-    );
+    let mut macho_container = MachoContainer::parse(&data_bytes);
 
-    let changed_macho = MachO::parse(&changed, 0).unwrap();
+    // we try to change the rpath of the file to something longer
+    macho_container.change_install_id("very_very_very_very_very_very_very_longid.dylib");
+
+    let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
     insta::assert_debug_snapshot!(changed_macho);
     insta::assert_debug_snapshot!(changed_macho.name);
-    insta::assert_snapshot!(changed.len(), @"33355");
+    insta::assert_snapshot!(macho_container.data.len(), @"33355");
 }
 
 /// This test verify that a name of dynamic library can be changed
@@ -100,16 +95,17 @@ fn test_change_dylib_name() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
+    let mut macho_container = MachoContainer::parse(&data_bytes);
+
     // we try to change the rpath of the file to something longer
-    let changed = change_install_name(
-        data_bytes,
-        "/usr/lib/libSystem.B.dylib".to_string(),
-        "very_very_very_very_very_very_very_longid".to_string(),
+    macho_container.change_install_name(
+        "/usr/lib/libSystem.B.dylib",
+        "very_very_very_very_very_very_very_longid",
     );
 
-    let changed_macho = MachO::parse(&changed, 0).unwrap();
+    let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
     insta::assert_debug_snapshot!(changed_macho);
     insta::assert_debug_snapshot!(changed_macho.libs);
-    insta::assert_snapshot!(changed.len(), @"33440");
+    insta::assert_snapshot!(macho_container.data.len(), @"33440");
 }
