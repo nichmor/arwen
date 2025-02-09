@@ -4,7 +4,6 @@ use clap::Parser;
 
 use crate::macho::MachoContainer;
 
-// use crate::patcher::remove_rpath;
 
 /// Remove a run path
 #[derive(Parser, Debug)]

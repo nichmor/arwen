@@ -23,8 +23,6 @@ pub fn execute(args: Args) {
 
     macho.add_rpath(&args.new_rpath);
 
-    // let changed_buffer = add_rpath(bytes_of_file, args.new_rpath);
-
     let new_path = args.path.with_file_name(format!(
         "{}_added_rpath",
         args.path.file_name().unwrap().to_str().unwrap()

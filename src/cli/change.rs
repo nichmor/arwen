@@ -4,8 +4,6 @@ use clap::Parser;
 
 use crate::macho::MachoContainer;
 
-// use crate::patcher::change_rpath;
-
 /// Change already existing run path
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -28,8 +26,6 @@ pub fn execute(args: Args) {
     let mut macho = MachoContainer::parse(&bytes_of_file);
 
     macho.change_rpath(&args.old_rpath, &args.new_rpath);
-
-    // let changed_buffer = change_rpath(bytes_of_file, args.old_rpath, args.new_rpath);
 
     let new_path = args.path.with_file_name(format!(
         "{}_changed_rpath",

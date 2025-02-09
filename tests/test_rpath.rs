@@ -1,6 +1,3 @@
-// use arwen::patcher::{
-//     add_rpath, change_install_id, change_install_name, change_rpath, remove_rpath,
-// };
 use goblin::mach::MachO;
 use std::path::PathBuf;
 
