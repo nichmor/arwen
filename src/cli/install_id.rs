@@ -4,7 +4,6 @@ use clap::Parser;
 
 use crate::macho::MachoContainer;
 
-// use crate::patcher::change_install_id;
 
 /// Change dylib id. Works only if your object is a shared library.
 #[derive(Parser, Debug)]

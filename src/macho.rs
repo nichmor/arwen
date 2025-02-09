@@ -149,7 +149,6 @@ impl SingleMachO<'_> {
 pub struct FatMacho<'a> {
     pub inner: SingleMachO<'a>,
 
-    // _internal: SingleArch<'a>,
     pub arch: FatArch,
 }
 
