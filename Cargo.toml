@@ -33,7 +33,10 @@ object = { version = "0.36.5", features = ["write"] }
 [dependencies]
 clap = { version = "4.5.26", features = ["derive"] }
 goblin = { workspace = true }
-insta = "1.42.0"
 miette = "7.4.0"
 object = { workspace = true }
 scroll = "0.12.0"
+
+[dev-dependencies]
+insta = "1.42.0"
+tempfile = "3.16.0"

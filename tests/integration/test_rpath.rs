@@ -3,6 +3,8 @@ use std::fs::{self, create_dir_all};
 use std::path::PathBuf;
 use std::process::Command;
 
+use tempfile::tempdir;
+
 use crate::common::run_command;
 
 pub enum Tool {
@@ -10,11 +12,6 @@ pub enum Tool {
     Arwen,
 }
 
-impl Tool {
-    fn is_arwen(&self) -> bool {
-        matches!(self, Tool::Arwen)
-    }
-}
 
 fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String> {
     match tool {
@@ -26,15 +23,9 @@ fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String>
             .unwrap();
         }
         Tool::Arwen => {
-            run_command("arwen", &["add-rpath", "-n", "new_graf", "-p", base_binary]).unwrap();
+            run_command("arwen", &["add-rpath", "new_graf", base_binary]).unwrap();
         }
     }
-
-    let base_binary = if tool.is_arwen() {
-        format!("{}_added_rpath", base_binary)
-    } else {
-        base_binary.to_string()
-    };
 
     run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
 
@@ -60,15 +51,9 @@ fn remove_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<Stri
             .unwrap();
         }
         Tool::Arwen => {
-            run_command("arwen", &["remove", "-r", "path_graf", "-p", base_binary]).unwrap();
+            run_command("arwen", &["delete-rpath", "path_graf", base_binary]).unwrap();
         }
     }
-
-    let base_binary = if tool.is_arwen() {
-        format!("{}_no_rpath", base_binary)
-    } else {
-        base_binary.to_string()
-    };
 
     run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
 
@@ -96,25 +81,11 @@ fn change_rpath_and_codesign(base_binary: &str, tool: &Tool) -> std::io::Result<
         Tool::Arwen => {
             run_command(
                 "arwen",
-                &[
-                    "change-rpath",
-                    "-o",
-                    "path_graf",
-                    "-n",
-                    "test_path",
-                    "-p",
-                    base_binary,
-                ],
+                &["change-rpath", "path_graf", "test_path", base_binary],
             )
             .unwrap();
         }
     }
-
-    let base_binary = if tool.is_arwen() {
-        format!("{}_changed_rpath", base_binary)
-    } else {
-        base_binary.to_string()
-    };
 
     run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
 
@@ -149,23 +120,14 @@ fn change_install_name_and_codesign(base_binary: &str, tool: &Tool) -> std::io::
                 "arwen",
                 &[
                     "change-install-name",
-                    "-o",
                     "/usr/lib/libSystem.B.dylib",
-                    "-n",
                     "new_lib_system.id",
-                    "-p",
                     base_binary,
                 ],
             )
             .unwrap();
         }
     }
-
-    let base_binary = if tool.is_arwen() {
-        format!("{}_changed_install_name", base_binary)
-    } else {
-        base_binary.to_string()
-    };
 
     run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
 
@@ -186,7 +148,7 @@ fn test_add_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let data = package_dir.join("tests/data/hello_with_rpath");
 
-    let temp_folder = temp_dir().join("test_modify_rpath");
+    let temp_folder = tempdir().unwrap().path().join("test_add_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
@@ -217,7 +179,7 @@ fn test_remove_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let data = package_dir.join("tests/data/hello_with_rpath");
 
-    let temp_folder = temp_dir().join("test_modify_rpath");
+    let temp_folder = tempdir().unwrap().path().join("test_remove_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
@@ -248,7 +210,7 @@ fn test_change_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let data = package_dir.join("tests/data/hello_with_rpath");
 
-    let temp_folder = temp_dir().join("test_modify_rpath");
+    let temp_folder = tempdir().unwrap().path().join("test_change_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
@@ -280,7 +242,7 @@ fn test_change_install_name() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let data = package_dir.join("tests/data/hello_with_rpath");
 
-    let temp_folder = temp_dir().join("test_modify_rpath");
+    let temp_folder = tempdir().unwrap().path().join("test_change_install_name");
     fs::create_dir_all(&temp_folder).unwrap();
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
