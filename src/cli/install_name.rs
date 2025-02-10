@@ -22,7 +22,7 @@ pub fn execute(args: Args) -> Result<(), MachoError> {
 
     let mut macho = MachoContainer::parse(&bytes_of_file)?;
 
-    macho.change_install_name(&args.old_install_name, &args.new_install_name);
+    macho.change_install_name(&args.old_install_name, &args.new_install_name)?;
 
     std::fs::write(args.path_to_binary, macho.data).unwrap();
 

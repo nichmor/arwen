@@ -22,7 +22,7 @@ pub fn execute(args: Args) -> Result<(), MachoError> {
 
     let mut macho = MachoContainer::parse(&bytes_of_file)?;
 
-    macho.change_rpath(&args.old_rpath, &args.new_rpath);
+    macho.change_rpath(&args.old_rpath, &args.new_rpath)?;
 
     std::fs::write(args.path_to_binary, macho.data).unwrap();
 

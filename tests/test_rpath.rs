@@ -15,7 +15,9 @@ fn test_rpath_change() {
     let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
     // we try to change the rpath of the file to something longer
-    macho_container.change_rpath("path_graf", "path_graf_path_graf_path_graf_path_graf");
+    macho_container
+        .change_rpath("path_graf", "path_graf_path_graf_path_graf_path_graf")
+        .unwrap();
 
     let changed_macho = goblin::mach::MachO::parse(&macho_container.data, 0).unwrap();
 

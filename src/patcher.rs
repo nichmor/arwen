@@ -3,7 +3,6 @@ use std::vec;
 use goblin::mach::load_command::{self, LoadCommand, RpathCommand};
 use goblin::mach::load_command::{CommandVariant::*, DylibCommand};
 
-use goblin::mach::Mach;
 use scroll::Pwrite;
 
 use crate::macho::{HeaderContainer, MachoError};

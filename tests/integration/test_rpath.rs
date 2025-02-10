@@ -1,4 +1,3 @@
-use std::env::temp_dir;
 use std::fs::{self, create_dir_all};
 use std::path::PathBuf;
 use std::process::Command;
@@ -26,9 +25,9 @@ fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String>
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -52,9 +51,9 @@ fn remove_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<Stri
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -82,9 +81,9 @@ fn change_rpath_and_codesign(base_binary: &str, tool: &Tool) -> std::io::Result<
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -122,9 +121,9 @@ fn change_install_name_and_codesign(base_binary: &str, tool: &Tool) -> std::io::
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
