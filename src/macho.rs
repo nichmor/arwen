@@ -103,7 +103,7 @@ impl SingleMachO<'_> {
         remove_load_command(&mut self.data, &mut header, load_command);
 
         let (new_dylib, new_dylib_command_buffer) =
-            DlibCommandBuilder::new(&new_id, *old_dylib, self.ctx).build();
+            DlibCommandBuilder::new(new_id, *old_dylib, self.ctx).build();
 
         insert_command(
             &mut self.data,
@@ -134,7 +134,7 @@ impl SingleMachO<'_> {
         remove_load_command(&mut self.data, &mut header, load_command);
 
         let (new_dylib, new_dylib_command_buffer) =
-            DlibCommandBuilder::new(&new_name, *old_dylib, self.ctx).build();
+            DlibCommandBuilder::new(new_name, *old_dylib, self.ctx).build();
 
         insert_command(
             &mut self.data,
@@ -160,6 +160,7 @@ pub struct FatMachoContainer<'a> {
     pub data: Vec<u8>,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum MachoType<'a> {
     SingleArch(SingleMachO<'a>),
     Fat(FatMachoContainer<'a>),
