@@ -70,7 +70,7 @@ If a Mach-O binary depends on a shared library and you want to change the librar
 arwen change-install-name /old/libname.dylib /new/libname.dylib my_binary
 ```
 
-### Change Install ID (Mach-O only)
+### Change Install ID
 
 For a Mach-O shared library, changing its install ID:
 
