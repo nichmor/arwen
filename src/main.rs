@@ -1,5 +1,5 @@
 use arwen::cli::execute;
 
-fn main() {
-    execute();
+fn main() -> Result<(), arwen::macho::MachoError> {
+    execute()
 }
