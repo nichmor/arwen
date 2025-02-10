@@ -4,7 +4,6 @@ use clap::Parser;
 
 use crate::macho::MachoContainer;
 
-
 /// Remove a run path
 #[derive(Parser, Debug)]
 pub struct Args {
