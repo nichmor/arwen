@@ -1,4 +1,3 @@
-use std::env::temp_dir;
 use std::fs::{self, create_dir_all};
 use std::path::PathBuf;
 use std::process::Command;
@@ -11,7 +10,6 @@ pub enum Tool {
     InstallNameTool,
     Arwen,
 }
-
 
 fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String> {
     match tool {
@@ -27,11 +25,9 @@ fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String>
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
-
-    eprintln!("md5_output: {:?}", md5_output);
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -55,11 +51,9 @@ fn remove_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<Stri
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
-
-    eprintln!("md5_output: {:?}", md5_output);
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -87,11 +81,9 @@ fn change_rpath_and_codesign(base_binary: &str, tool: &Tool) -> std::io::Result<
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
-
-    eprintln!("md5_output: {:?}", md5_output);
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -129,11 +121,9 @@ fn change_install_name_and_codesign(base_binary: &str, tool: &Tool) -> std::io::
         }
     }
 
-    run_command("codesign", &["--force", "--sign", "-", &base_binary]).unwrap();
+    run_command("codesign", &["--force", "--sign", "-", base_binary]).unwrap();
 
-    let md5_output = Command::new("md5").arg(&base_binary).output().unwrap();
-
-    eprintln!("md5_output: {:?}", md5_output);
+    let md5_output = Command::new("md5").arg(base_binary).output().unwrap();
 
     let md5_hash = String::from_utf8_lossy(&md5_output.stdout)
         .split_whitespace()
@@ -168,9 +158,6 @@ fn test_add_rpath() {
     .unwrap();
     let hash2 = add_rpath_and_sign(base_arwen_binary.to_str().unwrap(), &Tool::Arwen).unwrap();
 
-    println!("nametool hash: {}", hash1);
-    println!("arwen hash: {}", hash2);
-
     assert_eq!(hash1, hash2);
 }
 
@@ -198,9 +185,6 @@ fn test_remove_rpath() {
     )
     .unwrap();
     let hash2 = remove_rpath_and_sign(base_arwen_binary.to_str().unwrap(), &Tool::Arwen).unwrap();
-
-    println!("nametool hash: {}", hash1);
-    println!("arwen hash: {}", hash2);
 
     assert_eq!(hash1, hash2);
 }
@@ -231,9 +215,6 @@ fn test_change_rpath() {
     let hash2 =
         change_rpath_and_codesign(base_arwen_binary.to_str().unwrap(), &Tool::Arwen).unwrap();
 
-    println!("nametool hash: {}", hash1);
-    println!("arwen hash: {}", hash2);
-
     assert_eq!(hash1, hash2);
 }
 
@@ -262,9 +243,6 @@ fn test_change_install_name() {
     .unwrap();
     let hash2 = change_install_name_and_codesign(base_arwen_binary.to_str().unwrap(), &Tool::Arwen)
         .unwrap();
-
-    println!("nametool hash: {}", hash1);
-    println!("arwen hash: {}", hash2);
 
     assert_eq!(hash1, hash2);
 }

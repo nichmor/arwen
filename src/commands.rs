@@ -7,6 +7,16 @@ use goblin::{
     mach::load_command::{Dylib, DylibCommand, RpathCommand, LC_RPATH, SIZEOF_RPATH_COMMAND},
 };
 use scroll::Pwrite;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum CommandBuilderError {
+    #[error("error when creating a CStr: {0}")]
+    CStrError(#[from] std::ffi::FromBytesWithNulError),
+
+    #[error("error when writing rpath command as bytes: {0}")]
+    ScrollError(#[from] scroll::Error),
+}
 
 /// A builder for creating a new `RpathCommand`.
 pub struct RpathCommandBuilder {
@@ -24,42 +34,31 @@ impl RpathCommandBuilder {
     }
 
     /// Builds a new `RpathCommand` and returns it along with the raw bytes.
-    pub fn build(&self) -> (RpathCommand, Vec<u8>) {
+    pub fn build(&self) -> Result<(RpathCommand, Vec<u8>), CommandBuilderError> {
         let raw_c_str_tmplt = format!("{}\0", self.raw_str);
-        let raw_c_str = CStr::from_bytes_with_nul(raw_c_str_tmplt.as_bytes()).unwrap();
+        let raw_c_str = CStr::from_bytes_with_nul(raw_c_str_tmplt.as_bytes())?;
         let raw_str_size = raw_c_str.count_bytes() + 1;
 
         // and make it aligned by 4
-        eprintln!("raw_str_size: {}", raw_str_size);
         let raw_str_size = padding_size(raw_str_size);
-
-        eprintln!("after aligning raw_str_size: {}", raw_str_size);
 
         let cmd_size = SIZEOF_RPATH_COMMAND as u32 + raw_str_size as u32;
         let cmd_size = align_to_arch(cmd_size as usize, self.ctx);
 
-        eprintln!("cmd_size: {}", cmd_size);
-
         let new_rpath = RpathCommand {
             cmd: LC_RPATH,
             cmdsize: cmd_size as u32,
-            // path: raw_str_size as u32,
             path: SIZEOF_RPATH_COMMAND as u32,
         };
 
-        // new_rpath
-
+        // new rpath command buffer
         let mut new_command_buffer = vec![0u8; cmd_size as usize];
         new_command_buffer.fill(0);
-        new_command_buffer.pwrite(new_rpath, 0).unwrap();
+        new_command_buffer.pwrite(new_rpath, 0)?;
 
-        eprintln!("raw_c_str: {:?}", raw_c_str.count_bytes());
+        new_command_buffer.pwrite(raw_c_str, SIZEOF_RPATH_COMMAND)?;
 
-        new_command_buffer
-            .pwrite(raw_c_str, SIZEOF_RPATH_COMMAND)
-            .unwrap();
-
-        (new_rpath, new_command_buffer)
+        Ok((new_rpath, new_command_buffer))
     }
 }
 
@@ -81,9 +80,9 @@ impl DlibCommandBuilder {
     }
 
     /// Builds a new `DylibCommand` and returns it along with the raw bytes.
-    pub fn build(&self) -> (DylibCommand, Vec<u8>) {
+    pub fn build(&self) -> Result<(DylibCommand, Vec<u8>), CommandBuilderError> {
         let raw_c_str_tmplt = format!("{}\0", self.dlib_name);
-        let raw_c_str = CStr::from_bytes_with_nul(raw_c_str_tmplt.as_bytes()).unwrap();
+        let raw_c_str = CStr::from_bytes_with_nul(raw_c_str_tmplt.as_bytes())?;
         let raw_str_size = raw_c_str.count_bytes() + 1;
 
         // and make it aligned by 4
@@ -105,17 +104,15 @@ impl DlibCommandBuilder {
         let new_dylib = DylibCommand {
             cmd: self.dlib.cmd,
             cmdsize: cmd_size as u32,
-            // path: raw_str_size as u32,
-            // path: SIZEOF_RPATH_COMMAND as u32,
             dylib,
         };
 
         let mut new_command_buffer = vec![0u8; cmd_size as usize];
         new_command_buffer.fill(0);
-        new_command_buffer.pwrite(new_dylib, 0).unwrap();
+        new_command_buffer.pwrite(new_dylib, 0)?;
 
-        new_command_buffer.pwrite(raw_c_str, 24).unwrap();
+        new_command_buffer.pwrite(raw_c_str, 24)?;
 
-        (new_dylib, new_command_buffer)
+        Ok((new_dylib, new_command_buffer))
     }
 }

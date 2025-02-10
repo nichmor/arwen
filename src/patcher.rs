@@ -5,7 +5,7 @@ use goblin::mach::load_command::{CommandVariant::*, DylibCommand};
 
 use scroll::Pwrite;
 
-use crate::macho::HeaderContainer;
+use crate::macho::{HeaderContainer, MachoError};
 
 /// Removes a load command from the buffer.
 ///
@@ -17,20 +17,17 @@ pub fn remove_load_command(
     buffer: &mut Vec<u8>,
     header: &mut HeaderContainer,
     load_command: &LoadCommand,
-) {
-    // // remove entire command from the buffer
-    eprintln!("buffer before {}", buffer.len());
+) -> Result<(), MachoError> {
+    // Remove entire command from the buffer
 
     let drain_offset = load_command.offset + load_command.command.cmdsize();
     buffer.drain(load_command.offset..drain_offset);
 
-    eprintln!("buffer after {}", buffer.len());
-
-    // update the header
+    // Update the header
     header.inner.ncmds -= 1;
     header.inner.sizeofcmds -= load_command.command.cmdsize() as u32;
 
-    // Step 3: Insert padding after the remaining load commands
+    // Insert padding after the remaining load commands
     let padding_offset = header.size() + header.inner.sizeofcmds as usize;
     let padding_size = load_command.command.cmdsize();
 
@@ -42,7 +39,6 @@ pub fn remove_load_command(
     // Write zero bytes as padding
     let mut zeroing_buffer = vec![0u8; padding_size];
     zeroing_buffer.fill(0);
-    eprintln!("zeroing buffer {}", zeroing_buffer.len());
 
     let tail = buffer.split_off(padding_offset);
 
@@ -52,7 +48,9 @@ pub fn remove_load_command(
     // Add back the tail
     buffer.extend(tail);
 
-    buffer.pwrite_with(header.inner, 0, header.ctx).unwrap();
+    buffer.pwrite_with(header.inner, 0, header.ctx)?;
+
+    Ok(())
 }
 
 /// Insert a new load command at the given offset.
@@ -60,14 +58,16 @@ pub fn remove_load_command(
 /// # Arguments
 /// * `buffer` - Mutable byte buffer representing the Mach-O file.
 /// * `header` - Header of the macho. It will be updated after removing the load command.
-/// * `load_command` - Load Command to remove.
+/// * `offset` - Offset to insert the new load command.
+/// * `new_cmd_size` - Size of the new command.
+/// * `load_command` - Load Command raw data to insert.
 pub fn insert_command(
     buffer: &mut Vec<u8>,
     header: &mut HeaderContainer,
     offset: usize,
     new_cmd_size: u32,
     load_data: Vec<u8>,
-) {
+) -> Result<(), MachoError> {
     // update the header
     header.inner.ncmds += 1;
     header.inner.sizeofcmds += new_cmd_size;
@@ -86,7 +86,9 @@ pub fn insert_command(
     let drain_offset = header.size() + header.inner.sizeofcmds as usize + new_cmd_size as usize;
     buffer.drain(header.size() + header.inner.sizeofcmds as usize..drain_offset);
 
-    buffer.pwrite_with(header.inner, 0, header.ctx).unwrap();
+    buffer.pwrite_with(header.inner, 0, header.ctx)?;
+
+    Ok(())
 }
 
 /// Find the rpath command at the given index.
@@ -116,7 +118,6 @@ pub fn find_dylib_command(
     let mut count = 0;
 
     for command in commands {
-        eprintln!("command {:?}", command);
         match &command.command {
             LoadDylib(dylib_command)
             | LoadUpwardDylib(dylib_command)

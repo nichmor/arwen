@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use crate::macho::MachoError;
+
 pub mod add;
 pub mod change;
 pub mod delete;
@@ -23,23 +25,13 @@ struct Args {
     command: Command,
 }
 
-pub fn execute() {
+pub fn execute() -> Result<(), MachoError> {
     let args = Args::parse();
     match args.command {
-        Command::DeleteRpath(args) => {
-            delete::execute(args);
-        }
-        Command::ChangeRpath(args) => {
-            change::execute(args);
-        }
-        Command::AddRpath(args) => {
-            add::execute(args);
-        }
-        Command::ChangeInstallName(args) => {
-            install_name::execute(args);
-        }
-        Command::ChangeInstallId(args) => {
-            install_id::execute(args);
-        }
+        Command::DeleteRpath(args) => delete::execute(args),
+        Command::ChangeRpath(args) => change::execute(args),
+        Command::AddRpath(args) => add::execute(args),
+        Command::ChangeInstallName(args) => install_name::execute(args),
+        Command::ChangeInstallId(args) => install_id::execute(args),
     }
 }

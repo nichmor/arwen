@@ -12,10 +12,12 @@ fn test_rpath_change() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    let mut macho_container = MachoContainer::parse(&data_bytes);
+    let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
     // we try to change the rpath of the file to something longer
-    macho_container.change_rpath("path_graf", "path_graf_path_graf_path_graf_path_graf");
+    macho_container
+        .change_rpath("path_graf", "path_graf_path_graf_path_graf_path_graf")
+        .unwrap();
 
     let changed_macho = goblin::mach::MachO::parse(&macho_container.data, 0).unwrap();
 
@@ -35,10 +37,10 @@ fn test_rpath_remove() {
     let data_bytes = std::fs::read(&data).unwrap();
 
     // we try to change the rpath of the file to something longer
-    let mut macho_container = MachoContainer::parse(&data_bytes);
+    let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
     // we try to change the rpath of the file to something longer
-    macho_container.remove_rpath("path_graf");
+    macho_container.remove_rpath("path_graf").unwrap();
 
     let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
@@ -57,9 +59,11 @@ fn test_rpath_add() {
     let data_bytes = std::fs::read(&data).unwrap();
 
     // we try to change the rpath of the file to something longer
-    let mut macho_container = MachoContainer::parse(&data_bytes);
+    let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
-    macho_container.add_rpath("abababababababababababaabbababababababababab");
+    macho_container
+        .add_rpath("abababababababababababaabbababababababababab")
+        .unwrap();
 
     let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
@@ -77,10 +81,12 @@ fn test_change_dylib_id() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    let mut macho_container = MachoContainer::parse(&data_bytes);
+    let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
     // we try to change the install id of the dlib to something longer
-    macho_container.change_install_id("very_very_very_very_very_very_very_longid.dylib");
+    macho_container
+        .change_install_id("very_very_very_very_very_very_very_longid.dylib")
+        .unwrap();
 
     let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
@@ -98,13 +104,15 @@ fn test_change_dylib_name() {
 
     let data_bytes = std::fs::read(&data).unwrap();
 
-    let mut macho_container = MachoContainer::parse(&data_bytes);
+    let mut macho_container = MachoContainer::parse(&data_bytes).unwrap();
 
     // we try to change the rpath of the file to something longer
-    macho_container.change_install_name(
-        "/usr/lib/libSystem.B.dylib",
-        "very_very_very_very_very_very_very_longid",
-    );
+    macho_container
+        .change_install_name(
+            "/usr/lib/libSystem.B.dylib",
+            "very_very_very_very_very_very_very_longid",
+        )
+        .unwrap();
 
     let changed_macho = MachO::parse(&macho_container.data, 0).unwrap();
 
