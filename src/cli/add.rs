@@ -7,26 +7,19 @@ use crate::macho::MachoContainer;
 /// Add a run path
 #[derive(Parser, Debug)]
 pub struct Args {
-    /// Path to the file to remove
-    #[arg(short)]
-    pub path: PathBuf,
-
     /// New rpath to add
-    #[arg(short)]
     pub new_rpath: String,
+
+    /// Path to the file to change
+    pub path_to_binary: PathBuf,
 }
 
 pub fn execute(args: Args) {
-    let bytes_of_file = std::fs::read(&args.path).unwrap();
+    let bytes_of_file = std::fs::read(&args.path_to_binary).unwrap();
 
     let mut macho = MachoContainer::parse(&bytes_of_file);
 
     macho.add_rpath(&args.new_rpath);
 
-    let new_path = args.path.with_file_name(format!(
-        "{}_added_rpath",
-        args.path.file_name().unwrap().to_str().unwrap()
-    ));
-
-    std::fs::write(new_path, macho.data).unwrap();
+    std::fs::write(args.path_to_binary, macho.data).unwrap();
 }

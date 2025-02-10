@@ -2,13 +2,13 @@ use clap::Parser;
 
 pub mod add;
 pub mod change;
+pub mod delete;
 pub mod install_id;
 pub mod install_name;
-pub mod remove;
 
 #[derive(Parser, Debug)]
 pub enum Command {
-    Remove(remove::Args),
+    DeleteRpath(delete::Args),
     ChangeRpath(change::Args),
     AddRpath(add::Args),
     ChangeInstallName(install_name::Args),
@@ -26,8 +26,8 @@ struct Args {
 pub fn execute() {
     let args = Args::parse();
     match args.command {
-        Command::Remove(args) => {
-            remove::execute(args);
+        Command::DeleteRpath(args) => {
+            delete::execute(args);
         }
         Command::ChangeRpath(args) => {
             change::execute(args);
