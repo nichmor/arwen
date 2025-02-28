@@ -67,6 +67,7 @@ dependencies = [
  "insta",
  "miette",
  "object",
+ "object-rewrite",
  "scroll",
  "tempfile",
  "thiserror 2.0.11",
@@ -326,9 +327,8 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.36.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aedf0a2d09c573ed1d8d85b30c119153926a2b36dce0ab28322c09a117a4683e"
+version = "0.36.7"
+source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#dda032560f48c71a46c6d1aa246bceb2e7712e29"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -336,6 +336,14 @@ dependencies = [
  "indexmap",
  "memchr",
  "ruzstd",
+]
+
+[[package]]
+name = "object-rewrite"
+version = "0.1.1"
+source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#dda032560f48c71a46c6d1aa246bceb2e7712e29"
+dependencies = [
+ "object",
 ]
 
 [[package]]
