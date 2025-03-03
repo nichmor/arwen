@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-/// Sets the DT_SOABI field in the ELF file
+/// Sets the DT_SONAME field in the ELF file
 #[derive(Parser, Debug)]
 pub struct Args {
     /// SONAME to set
@@ -12,7 +12,7 @@ pub struct Args {
     pub path_to_binary: PathBuf,
 }
 
-pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
+pub fn execute(args: Args) -> Result<(), crate::elf::ElfError> {
     let bytes_of_file = std::fs::read(&args.path_to_binary).unwrap();
 
     let mut elf = crate::elf::ElfContainer::parse(&bytes_of_file)?;

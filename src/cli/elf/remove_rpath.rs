@@ -9,7 +9,7 @@ pub struct Args {
     pub path_to_binary: PathBuf,
 }
 
-pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
+pub fn execute(args: Args) -> Result<(), crate::elf::ElfError> {
     let bytes_of_file = std::fs::read(&args.path_to_binary).unwrap();
 
     let mut elf = crate::elf::ElfContainer::parse(&bytes_of_file)?;

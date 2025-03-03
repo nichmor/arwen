@@ -1,4 +1,4 @@
-use crate::macho::MachoError;
+use crate::elf::ElfError;
 
 use super::ElfCommand;
 
@@ -26,7 +26,7 @@ pub mod set_rpath;
 pub mod set_soname;
 pub mod shrink_rpath;
 
-pub fn execute(elf: ElfCommand) -> Result<(), MachoError> {
+pub fn execute(elf: ElfCommand) -> Result<(), ElfError> {
     match elf {
         ElfCommand::AddRpath(args) => add_rpath::execute(args),
         ElfCommand::RemoveRpath(args) => remove_rpath::execute(args),

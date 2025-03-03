@@ -1,6 +1,5 @@
 use clap::Parser;
-
-use crate::macho::MachoError;
+use thiserror::Error;
 
 /// Macho CLI
 pub mod add;
@@ -14,13 +13,33 @@ pub mod elf;
 
 #[derive(Parser, Debug)]
 pub enum Command {
+    #[command(subcommand)]
+    /// Mach-O commands
+    Macho(MachoCommand),
+    #[command(subcommand)]
+    /// ELF commands
+    Elf(ElfCommand),
+}
+
+#[derive(Debug, Parser)]
+pub enum MachoCommand {
     DeleteRpath(delete::Args),
     ChangeRpath(change::Args),
     AddRpath(add::Args),
     ChangeInstallName(install_name::Args),
     ChangeInstallId(install_id::Args),
-    #[command(subcommand)]
-    Elf(ElfCommand),
+}
+
+pub fn macho_execute(macho: MachoCommand) -> Result<(), ArwenError> {
+    match macho {
+        MachoCommand::DeleteRpath(args) => delete::execute(args).map_err(ArwenError::Macho),
+        MachoCommand::ChangeRpath(args) => change::execute(args).map_err(ArwenError::Macho),
+        MachoCommand::AddRpath(args) => add::execute(args).map_err(ArwenError::Macho),
+        MachoCommand::ChangeInstallName(args) => {
+            install_name::execute(args).map_err(ArwenError::Macho)
+        }
+        MachoCommand::ChangeInstallId(args) => install_id::execute(args).map_err(ArwenError::Macho),
+    }
 }
 
 #[derive(Debug, Parser)]
@@ -58,14 +77,19 @@ struct Args {
     command: Command,
 }
 
-pub fn execute() -> Result<(), MachoError> {
+pub fn execute() -> Result<(), ArwenError> {
     let args = Args::parse();
     match args.command {
-        Command::DeleteRpath(args) => delete::execute(args),
-        Command::ChangeRpath(args) => change::execute(args),
-        Command::AddRpath(args) => add::execute(args),
-        Command::ChangeInstallName(args) => install_name::execute(args),
-        Command::ChangeInstallId(args) => install_id::execute(args),
-        Command::Elf(elf) => elf::execute(elf),
+        Command::Macho(args) => macho_execute(args),
+        Command::Elf(elf) => elf::execute(elf).map_err(ArwenError::Elf),
     }
+}
+
+#[derive(Debug, Error)]
+pub enum ArwenError {
+    #[error("error while patching Mach-O file")]
+    Macho(#[from] crate::macho::MachoError),
+
+    #[error("error while patching ELF file")]
+    Elf(#[from] crate::elf::ElfError),
 }

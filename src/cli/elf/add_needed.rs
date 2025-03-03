@@ -12,7 +12,7 @@ pub struct Args {
     pub dt_needed: Vec<String>,
 }
 
-pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
+pub fn execute(args: Args) -> Result<(), crate::elf::ElfError> {
     let bytes_of_file = std::fs::read(&args.path_to_binary).unwrap();
 
     let mut elf = crate::elf::ElfContainer::parse(&bytes_of_file)?;
@@ -23,8 +23,6 @@ pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
         std::fs::File::create(format!("{}", args.path_to_binary.to_string_lossy())).unwrap();
 
     elf.write(&output_file)?;
-
-    // std::fs::write(args.path_to_binary, macho.data).unwrap();
 
     Ok(())
 }
