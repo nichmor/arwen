@@ -5,7 +5,7 @@ use clap::Parser;
 /// Parse a single key-value pair
 fn parse_key_val(s: &str) -> Result<(String, String), Box<dyn Error + Send + Sync + 'static>> {
     let pos = s
-        .find(' ')
+        .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
     let key = s[..pos].to_string();
     let value = s[pos + 1..].to_string();
@@ -20,7 +20,7 @@ pub struct Args {
 
     // DT_NEEDED to replace
     #[arg(value_parser = parse_key_val)]
-    pub dt_needed: HashMap<String, String>,
+    pub dt_needed: Vec<(String, String)>,
 }
 
 pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
@@ -28,15 +28,17 @@ pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
 
     let mut elf = crate::elf::ElfContainer::parse(&bytes_of_file)?;
 
-    elf.replace_needed(&args.dt_needed)?;
+    let mut dt_needed = HashMap::new();
+    for (key, value) in args.dt_needed {
+        dt_needed.insert(key, value);
+    }
+
+    elf.replace_needed(&dt_needed)?;
 
     let output_file =
-        std::fs::File::create(format!("{}_patched", args.path_to_binary.to_string_lossy()))
-            .unwrap();
+        std::fs::File::create(format!("{}", args.path_to_binary.to_string_lossy())).unwrap();
 
     elf.write(&output_file)?;
-
-    // std::fs::write(args.path_to_binary, macho.data).unwrap();
 
     Ok(())
 }

@@ -45,7 +45,6 @@ tempfile = "3.16.0"
 
 
 [patch.crates-io]
-
 object = { git = "https://github.com/nichmor/object.git", branch = "feat/expose-header-as-mut"}
 object-rewrite = { git = "https://github.com/nichmor/object.git", branch = "feat/expose-header-as-mut"}
 

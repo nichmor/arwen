@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use object::elf;
 use object_rewrite::Rewriter;
 
 use crate::macho::MachoError;
@@ -45,6 +46,13 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Print the DT_RUNPATH.
+    pub fn print_runpath(&mut self) {
+        if let Some(runpath) = self.inner.elf_runpath() {
+            println!("{}", String::from_utf8_lossy(runpath));
+        }
+    }
+
     /// Force the ELF file to use the DT_RPATH instead of DT_RUNPATH.
     pub fn force_rpath(&mut self) -> Result<(), MachoError> {
         self.inner.elf_use_rpath().unwrap();
@@ -61,11 +69,23 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Print the PT_INTERPRETER program header.
+    pub fn print_interpreter(&mut self) {
+        if let Some(interp) = self.inner.elf_interpreter() {
+            println!("{}", String::from_utf8_lossy(interp));
+        }
+    }
+
     /// Set the OS ABI in the ELF file.
     pub fn set_os_abi(&mut self, os_abi: &str) -> Result<(), MachoError> {
         self.inner.elf_set_osabi(os_abi).unwrap();
 
         Ok(())
+    }
+
+    /// Print the OS ABI in the ELF file.
+    pub fn print_os_abi(&mut self) {
+        println!("{}", self.inner.header().os_abi);
     }
 
     /// Set the SONAME of DT_SONAME.
@@ -77,12 +97,21 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Print the SONAME of DT_SONAME.
+    pub fn print_soname(&mut self) {
+        if let Some(soname) = self.inner.elf_soname() {
+            println!("{}", String::from_utf8_lossy(soname));
+        }
+    }
+
+    /// Remove RPATHs that don't point to the given prefixes.
     pub fn shrink_rpath(&mut self, rpath_prefixes: Vec<String>) -> Result<(), MachoError> {
         self.inner.elf_shrink_rpath(rpath_prefixes).unwrap();
 
         Ok(())
     }
 
+    /// Add DT_NEEDED to the ELF file.
     pub fn add_needed(&mut self, dt_needed: Vec<String>) -> Result<(), MachoError> {
         let dt_as_u8 = dt_needed
             .iter()
@@ -93,6 +122,7 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Remove DT_NEEDED from the ELF file.
     pub fn remove_needed(&mut self, dt_needed: Vec<String>) -> Result<(), MachoError> {
         let dt_as_u8 = dt_needed
             .iter()
@@ -103,6 +133,7 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Replace DT_NEEDED in the ELF file.
     pub fn replace_needed(
         &mut self,
         dt_needed: &HashMap<String, String>,
@@ -113,36 +144,60 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Print the DT_NEEDED.
+    pub fn print_needed(&mut self) {
+        for needed in self.inner.elf_needed() {
+            println!("{}", String::from_utf8_lossy(needed));
+        }
+    }
+
+    /// Disable the default library search paths.
     pub fn no_default_lib(&mut self) -> Result<(), MachoError> {
         self.inner.elf_no_default_lib().unwrap();
 
         Ok(())
     }
 
+    /// Clear the version from given symbol.
     pub fn clear_version_symbol(&mut self, symbol: &str) -> Result<(), MachoError> {
         self.inner.elf_clear_symbol_version(symbol).unwrap();
 
         Ok(())
     }
 
+    /// Add a debug tag to the ELF file.
     pub fn add_debug_tag(&mut self) -> Result<(), MachoError> {
         self.inner.elf_add_dynamic_debug().unwrap();
 
         Ok(())
     }
 
+    /// Remove the executable stack execution permission.
     pub fn clear_exec_stack(&mut self) -> Result<(), MachoError> {
         self.inner.elf_clear_exec_stack().unwrap();
 
         Ok(())
     }
 
+    /// Set the executable stack execution permission.
     pub fn set_exec_stack(&mut self) -> Result<(), MachoError> {
         self.inner.elf_set_exec_stack().unwrap();
 
         Ok(())
     }
 
+    /// Print the executable stack execution permission.
+    pub fn print_exec_stack(&mut self) {
+        if let Some(exec_flag) = self.inner.elf_gnu_exec_stack() {
+            if exec_flag & elf::PF_X == elf::PF_X {
+                println!("X");
+            } else {
+                println!("-");
+            }
+        }
+    }
+
+    /// Rename dynamic symbols in the ELF file.
     pub fn rename_dynamic_symbols(
         &mut self,
         symbols: &HashMap<String, String>,

@@ -328,7 +328,7 @@ dependencies = [
 [[package]]
 name = "object"
 version = "0.36.7"
-source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#dda032560f48c71a46c6d1aa246bceb2e7712e29"
+source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#a6e63479e38a2e4944110c70caa1dfe5237f1e78"
 dependencies = [
  "crc32fast",
  "flate2",
@@ -341,7 +341,7 @@ dependencies = [
 [[package]]
 name = "object-rewrite"
 version = "0.1.1"
-source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#dda032560f48c71a46c6d1aa246bceb2e7712e29"
+source = "git+https://github.com/nichmor/object.git?branch=feat/expose-header-as-mut#a6e63479e38a2e4944110c70caa1dfe5237f1e78"
 dependencies = [
  "object",
 ]

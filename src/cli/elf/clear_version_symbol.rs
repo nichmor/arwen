@@ -20,8 +20,7 @@ pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
     elf.clear_version_symbol(&args.symbol)?;
 
     let output_file =
-        std::fs::File::create(format!("{}_patched", args.path_to_binary.to_string_lossy()))
-            .unwrap();
+        std::fs::File::create(format!("{}", args.path_to_binary.to_string_lossy())).unwrap();
 
     elf.write(&output_file)?;
 

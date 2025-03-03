@@ -17,15 +17,12 @@ pub fn execute(args: Args) -> Result<(), crate::macho::MachoError> {
 
     let mut elf = crate::elf::ElfContainer::parse(&bytes_of_file)?;
 
-    elf.add_runpath(&args.new_rpath)?;
+    elf.set_runpath(&args.new_rpath)?;
 
     let output_file =
-        std::fs::File::create(format!("{}_patched", args.path_to_binary.to_string_lossy()))
-            .unwrap();
+        std::fs::File::create(format!("{}", args.path_to_binary.to_string_lossy())).unwrap();
 
     elf.write(&output_file)?;
-
-    // std::fs::write(args.path_to_binary, macho.data).unwrap();
 
     Ok(())
 }
