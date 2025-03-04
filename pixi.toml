@@ -63,12 +63,12 @@ build-bin-with-dylib-x64 = { cmd = "clang -m64 -o x64/main main.c -L x64 -lmylib
 ] }
 
 
-test-py = { cmd = "pytest -s tests", depends-on = ["build-release"] }
+test-py = { cmd = "pytest -s tests", depends-on = ["install"] }
 
 test-py-ci = { cmd = "pytest -s tests" }
 
 test = { cmd = "cargo test --workspace --all-targets", depends-on = [
-  "build-release",
+  "install",
 ] }
 
 [environments]
