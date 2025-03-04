@@ -10,6 +10,33 @@ version = "0.1.0"
 [dependencies]
 rust = "~=1.81.0"
 ruby = "~=3.4.1"
+pytest = ">=8.3.4,<9"
+python = ">=3.13.2,<3.14"
+
+[feature.lint.dependencies]
+actionlint = ">=1.7.7,<2"
+pre-commit = ">=4.1.0,<5"
+pre-commit-hooks = ">=5.0.0,<6"
+prettier = ">=3.5.2,<4"
+ruff = ">=0.9.7,<0.10"
+shellcheck = ">=0.10.0,<0.11"
+taplo = ">=0.9.3,<0.10"
+typos = ">=1.29.10,<2"
+
+[feature.lint.tasks]
+actionlint = { cmd = "actionlint", env = { SHELLCHECK_OPTS = "-e SC2086" } }
+cargo-clippy = "cargo clippy --all-targets --workspace -- -D warnings"
+cargo-fmt = "cargo fmt --all"
+lint = "pre-commit run --all-files --hook-stage=manual"
+pre-commit-install = "pre-commit install --install-hooks"
+pre-commit-run = "pre-commit run --all-files"
+prettier-fmt = { cmd = "prettier --write" }
+ruff-format = "ruff format --force-exclude"
+ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
+toml-format = { cmd = "taplo fmt", env = { RUST_LOG = "warn" } }
+toml-lint = "taplo lint --verbose **/pixi.toml"
+typecheck-python = "mypy"
+typos = "typos --write-changes --force-exclude"
 
 
 [tasks]
@@ -31,4 +58,18 @@ build-dylib-x64 = { cmd = "clang -dynamiclib -m64 -o x64/libmylib.dylib mylib.c"
 build-dylib-x86_64 = { cmd = "clang -dynamiclib -arch x86_64 -o x86_64/libmylib.dylib mylib.c", cwd = "tools/clang" }
 build-dylib-fat = { cmd = "lipo -create tools/clang/x64/libmylib.dylib tools/clang/x86_64/libmylib.dylib -output tools/clang/fat" }
 
-build-bin-with-dylib-x64 = { cmd = "clang -m64 -o x64/main main.c -L x64 -lmylib", cwd = "tools/clang", depends-on = ["build-dylib-x64"] }
+build-bin-with-dylib-x64 = { cmd = "clang -m64 -o x64/main main.c -L x64 -lmylib", cwd = "tools/clang", depends-on = [
+  "build-dylib-x64",
+] }
+
+
+test-py = { cmd = "pytest -s tests", depends-on = ["build-release"] }
+
+test-py-ci = { cmd = "pytest -s tests" }
+
+test = { cmd = "cargo test --workspace --all-targets", depends-on = [
+  "build-release",
+] }
+
+[environments]
+lint = { features = ["lint"], solve-group = "default" }

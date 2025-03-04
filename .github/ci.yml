@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  RUST_LOG: info
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: "-D warnings"
+  CARGO_TERM_COLOR: always
+  CICD_INTERMEDIATES_DIR: "_cicd-intermediates"
+  XDG_CACHE_HOME: ${{ github.workspace }}/.cache
+  PYTEST_ADDOPTS: "--color=yes"
+
+  #
+  # Select a profile that is used for building the binary. The profile optimizes for certain use-cases.
+  # For distribution builds we want to reduce the size of the binary as much as possible. Whereas in
+  # regular CI builds we just want the fastest build possible.
+  #
+  # We switch based on the branch that is being built. If it's the main branch or a tag, we use the `dist`.
+  #
+  # Inspiration was taken from this blog: https://arusahni.net/blog/2020/03/optimizing-rust-binary-size.html
+  #
+  CARGO_BUILD_PROFILE: ci
+
+jobs:
+  # Check if the code has changed in such a way that a rebuild is needed.
+  determine_changes:
+    name: "determine changes"
+    runs-on: ubuntu-latest
+    outputs:
+      # Flag that is raised when any code is changed
+      code: ${{ steps.changed.outputs.code_any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: tj-actions/changed-files@v45
+        id: changed
+        with:
+          files_yaml: |
+            code:
+              - "**/*"
+              - "!assets/**"
+              - "!docs/**"
+              - "docs/source_files/**"
+              - "!install/**"
+              - "!assets/**"
+              - "!**/*.md"
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          environments: lint
+      - name: pre-commit
+        run: pixi run pre-commit-run --color=always --show-diff-on-failure
+
+  # Check that all the code references are correct.
+  check-rustdoc-links:
+    name: "cargo rustdoc | ubuntu"
+    needs: determine_changes
+    runs-on: ubuntu-latest
+    if: ${{ needs.determine_changes.outputs.code == 'true' || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: |
+          for package in $(cargo metadata --no-deps --format-version=1 | jq -r '.packages[] | .name'); do
+            cargo rustdoc -p "$package" --all-features -- -D warnings -W unreachable-pub
+          done
+
+  # Checks for dependencies that are not used in the codebase
+  cargo-machete:
+    name: Cargo Machete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Machete
+        uses: bnjbvr/cargo-machete@v0.7.1
+
+  # Checks for duplicate version of package
+  cargo-vendor:
+    name: Cargo Vendor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target/pixi"
+          key: ${{ hashFiles('pixi.lock') }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Test cargo vendor
+        run: cargo vendor --locked
+
+  #
+  # Run tests on important platforms.
+  #
+
+  cargo-test-linux:
+    name: "cargo test | ubuntu"
+    timeout-minutes: 15
+    needs: determine_changes
+    if: ${{ needs.determine_changes.outputs.code == 'true' || github.ref == 'refs/heads/main' }}
+    runs-on: 8core_ubuntu_latest_runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target/pixi"
+          key: ${{ hashFiles('pixi.lock') }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Test arwen
+        run: pixi run test-py
+
+      - name: Test arwen
+        run: cargo test --workspace --all-targets
+
+  cargo-test-macos-aarch64:
+    name: "cargo test | macos aarch64"
+    timeout-minutes: 15
+    needs: determine_changes
+    if: ${{ needs.determine_changes.outputs.code == 'true' || github.ref == 'refs/heads/main' }}
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          cache: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target/pixi"
+          key: ${{ hashFiles('pixi.lock') }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Test arwen
+        run: pixi run test-py
+
+      - name: Test arwen
+        run: cargo test --workspace --all-targets
