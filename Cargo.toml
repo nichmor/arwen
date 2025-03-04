@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-# members = ["crates/arwen-write"]
 
 
 [workspace.package]
