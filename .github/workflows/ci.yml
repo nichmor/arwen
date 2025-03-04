@@ -167,4 +167,6 @@ jobs:
 
 
       - name: Test arwen
-        run: cargo test --workspace --all-targets
+        run: |
+          cargo install --path .
+          cargo test --workspace --all-targets
