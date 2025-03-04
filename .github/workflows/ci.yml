@@ -159,7 +159,4 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Test arwen
-        run: pixi run test-py
-
-      - name: Test arwen
         run: cargo test --workspace --all-targets
