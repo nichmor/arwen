@@ -3,11 +3,12 @@
 [pixi-badge]:https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json&style=flat-square
 [pixi-url]: https://pixi.sh
 
-# arwen: Patching Mach-O and ELF Binaries in Rust
+
+# arwen: Cross-Platform Binary Patching Tool for Mach-O and ELF in Rust
 
 ## Overview
 
-`arwen` is a cross-platform Rust implementation of `patchelf` (Linux) and `install_name_tool` (macOS) in one tool.
+`arwen` is a cross-platform Rust implementation that combines functionality similar to `patchelf` (Linux) and `install_name_tool` (macOS) into a single, versatile tool for binary manipulation.
 
 ## Installation
 
@@ -19,76 +20,122 @@ cargo install arwen
 
 ## Usage
 
-The CLI looks like this:
+### Mach-O Commands
 
+#### RPath Operations
 ```sh
-Usage: arwen <COMMAND>
+# Add an RPath
+arwen macho add-rpath /usr/local/lib my_binary
 
-Commands:
-  delete-rpath         Delete a run path
-  change-rpath         Change already existing run path
-  add-rpath            Add a run path
-  change-install-name  Change existing dylib load name
-  change-install-id    Change dylib id. Works only if your object is a shared library
-  help                 Print this message or the help of the given subcommand(s)
+# Change an existing RPath
+arwen macho change-rpath /old/path /new/path my_binary
 
-Options:
-  -h, --help  Print help
+# Delete an RPath
+arwen macho delete-rpath /unwanted/path my_binary
 ```
 
-## Examples (Mach-O only)
-
-### Add an RPath
-
-To add an RPath (`/usr/local/lib`) to an existing binary:
-
+#### Library Install Name and library id Operations
 ```sh
-arwen add-rpath /usr/local/lib my_binary
+# Change library install name
+arwen macho change-install-name /old/libname.dylib /new/libname.dylib my_binary
+
+# Change install ID of a shared library
+arwen macho change-install-id /new/install/id.dylib my_library.dylib
 ```
 
-### Change an Existing RPath
+### ELF Commands
 
-If your binary has an RPath that needs to be changed, for example, from `/old/path` to `/new/path`:
-
+#### Interpreter Operations
 ```sh
-arwen change-rpath /old/path /new/path my_binary
+# Set ELF interpreter
+arwen elf set-interpreter /path/to/new/interpreter my_elf_binary
+
+# Print current interpreter
+arwen elf print-interpreter my_elf_binary
 ```
 
-### Delete an RPath
-
-To remove an existing RPath (`/unwanted/path`) from a binary:
-
+#### ELF Header Operations
 ```sh
-arwen delete-rpath /unwanted/path my_binary
+# Print OS ABI
+arwen elf print-os-abi my_elf_binary
+
+# Set OS ABI
+arwen elf set-os-abi solaris my_elf_binary
 ```
 
-### Change Install Name
-
-If a Mach-O binary depends on a shared library and you want to change the library install name:
-
+#### RPATH Operations
 ```sh
-arwen change-install-name /old/libname.dylib /new/libname.dylib my_binary
+# Set RPATH
+arwen elf set-rpath /path1:/path2 my_elf_binary
+
+# Add RPATH
+arwen elf add-rpath /additional/path my_elf_binary
+
+# Remove RPATH
+arwen elf remove-rpath my_elf_binary
+
+# Print current RPATH
+arwen elf print-rpath my_elf_binary
+
+# Shrink RPATH with allowed prefixes
+arwen elf shrink-rpath --allowed-prefixes /usr/lib:/local/lib my_elf_binary
 ```
 
-### Change Install ID
-
-For a Mach-O shared library, changing its install ID:
-
+#### Dependency Management
 ```sh
-arwen change-install-id /new/install/id.dylib my_library.dylib
+# Add a needed library
+arwen elf add-needed my_elf_binary libexample.so libotherexample.so
+
+# Remove a needed library
+arwen elf remove-needed my_elf_binary libexample.so libotherexample.so
+
+# Replace a needed library
+arwen elf replace-needed my_elf_binary old_lib.so new_lib.so
+
+# Print needed libraries
+arwen elf print-needed my_elf_binary
 ```
 
-## Resigning the Binary After Changes
+#### Executable Stack Control
+```sh
+# Check executable stack status
+arwen elf print-exec-stack my_elf_binary
 
-On macOS, after modifying a binary, you need to re-sign it to ensure it runs properly. You can do this using `codesign`:
+# Clear executable stack
+arwen elf clear-exec-stack my_elf_binary
+
+# Set executable stack
+arwen elf set-exec-stack my_elf_binary
+```
+
+#### Symbol and Soname Operations
+```sh
+# Print soname
+arwen elf print-soname my_elf_binary
+
+# Set soname
+arwen elf set-soname new_soname my_elf_binary
+
+# Clear symbol version
+arwen elf clear-symbol-version symbol_name my_elf_binary
+
+# Rename dynamic symbols (using a map file)
+arwen elf rename-dynamic-symbols symbol_map.txt my_elf_binary
+```
+
+### Post-Modification Considerations
+
+#### Mach-O Re-signing (macOS)
+After modifying a Mach-O binary, re-sign it:
 
 ```sh
 codesign --force --sign - my_binary
 ```
 
+
 ## Integration Tests
 
-We have integration tests that validate that `arwen` maintains feature parity with `install_name_tool` to ensure correctness and reliability.
+We have comprehensive integration tests to validate feature parity with `install_name_tool` and `patchelf`, ensuring correctness and reliability.
 
 ## License
 
@@ -98,11 +145,9 @@ We have integration tests that validate that `arwen` maintains feature parity wi
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
-
-
 ## Status
 
-`arwen` is currently in active development and provides only `install_name_tool` implementation. `API` and `CLI` are subject to change to accommodate a more user-friendly experience.
+`arwen` is currently in active development. The `API` and `CLI` are subject to change to improve user experience.
 
 ## Funding
 
