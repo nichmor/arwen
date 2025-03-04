@@ -138,8 +138,6 @@ jobs:
       - name: Test arwen
         run: pixi run test-py
 
-      - name: Test arwen
-        run: cargo test --workspace --all-targets
 
   cargo-test-macos-aarch64:
     name: "cargo test | macos aarch64"
@@ -163,8 +161,6 @@ jobs:
 
       - name: Check install_name_tool
         run: which install_name_tool
-
-
 
       - name: Test arwen
         run: |

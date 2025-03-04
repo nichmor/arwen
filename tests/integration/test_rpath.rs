@@ -21,7 +21,7 @@ fn add_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<String>
             .unwrap();
         }
         Tool::Arwen => {
-            run_command("arwen", &["add-rpath", "new_graf", base_binary]).unwrap();
+            run_command("arwen", &["macho", "add-rpath", "new_graf", base_binary]).unwrap();
         }
     }
 
@@ -47,7 +47,11 @@ fn remove_rpath_and_sign(base_binary: &str, tool: &Tool) -> std::io::Result<Stri
             .unwrap();
         }
         Tool::Arwen => {
-            run_command("arwen", &["delete-rpath", "path_graf", base_binary]).unwrap();
+            run_command(
+                "arwen",
+                &["macho", "delete-rpath", "path_graf", base_binary],
+            )
+            .unwrap();
         }
     }
 
@@ -75,7 +79,13 @@ fn change_rpath_and_codesign(base_binary: &str, tool: &Tool) -> std::io::Result<
         Tool::Arwen => {
             run_command(
                 "arwen",
-                &["change-rpath", "path_graf", "test_path", base_binary],
+                &[
+                    "macho",
+                    "change-rpath",
+                    "path_graf",
+                    "test_path",
+                    base_binary,
+                ],
             )
             .unwrap();
         }
@@ -111,6 +121,7 @@ fn change_install_name_and_codesign(base_binary: &str, tool: &Tool) -> std::io::
             run_command(
                 "arwen",
                 &[
+                    "macho",
                     "change-install-name",
                     "/usr/lib/libSystem.B.dylib",
                     "new_lib_system.id",
@@ -143,7 +154,7 @@ fn test_add_rpath() {
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
-    let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
+    let base_arwen_binary = temp_folder.join("arwen/hello_with_rpath.bin");
 
     create_dir_all(temp_folder.join("arwen")).unwrap();
     create_dir_all(temp_folder.join("install_name_tool")).unwrap();
@@ -171,7 +182,7 @@ fn test_remove_rpath() {
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
-    let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
+    let base_arwen_binary = temp_folder.join("arwen/hello_with_rpath.bin");
 
     create_dir_all(temp_folder.join("arwen")).unwrap();
     create_dir_all(temp_folder.join("install_name_tool")).unwrap();
@@ -199,7 +210,7 @@ fn test_change_rpath() {
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
-    let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
+    let base_arwen_binary = temp_folder.join("arwen/hello_with_rpath.bin");
 
     create_dir_all(temp_folder.join("arwen")).unwrap();
     create_dir_all(temp_folder.join("install_name_tool")).unwrap();
@@ -228,7 +239,7 @@ fn test_change_install_name() {
 
     let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
-    let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
+    let base_arwen_binary = temp_folder.join("arwen/hello_with_rpath.bin");
 
     create_dir_all(temp_folder.join("arwen")).unwrap();
     create_dir_all(temp_folder.join("install_name_tool")).unwrap();
