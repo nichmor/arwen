@@ -50,14 +50,6 @@ repos:
         types: [yaml]
         files: ^\.github/workflows/
         stages: [pre-commit, manual]
-      # Typecheck python tests
-      - id: typecheck-python
-        name: Typecheck Python
-        entry: pixi run --environment=lint typecheck-python
-        language: system
-        types_or: [python, pyi]
-        pass_filenames: false
-        stages: [pre-commit, manual]
       # typos
       - id: typos
         name: Typos

@@ -141,7 +141,7 @@ fn test_add_rpath() {
     let temp_folder = tempdir().unwrap().path().join("test_add_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
-    let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
+    let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
     let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
 
@@ -169,7 +169,7 @@ fn test_remove_rpath() {
     let temp_folder = tempdir().unwrap().path().join("test_remove_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
-    let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
+    let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
     let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
 
@@ -197,7 +197,7 @@ fn test_change_rpath() {
     let temp_folder = tempdir().unwrap().path().join("test_change_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
-    let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
+    let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
     let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
 
@@ -226,7 +226,7 @@ fn test_change_install_name() {
     let temp_folder = tempdir().unwrap().path().join("test_change_install_name");
     fs::create_dir_all(&temp_folder).unwrap();
 
-    let base_install_name_tool_binary = temp_folder.join("install_name_tool/helo_with_rpath.bin");
+    let base_install_name_tool_binary = temp_folder.join("install_name_tool/hello_with_rpath.bin");
 
     let base_arwen_binary = temp_folder.join("arwen/helo_with_rpath.bin");
 

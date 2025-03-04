@@ -52,7 +52,7 @@ impl RpathCommandBuilder {
         };
 
         // new rpath command buffer
-        let mut new_command_buffer = vec![0u8; cmd_size as usize];
+        let mut new_command_buffer = vec![0u8; cmd_size];
         new_command_buffer.fill(0);
         new_command_buffer.pwrite(new_rpath, 0)?;
 
@@ -107,7 +107,7 @@ impl DlibCommandBuilder {
             dylib,
         };
 
-        let mut new_command_buffer = vec![0u8; cmd_size as usize];
+        let mut new_command_buffer = vec![0u8; cmd_size];
         new_command_buffer.fill(0);
         new_command_buffer.pwrite(new_dylib, 0)?;
 

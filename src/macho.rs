@@ -199,7 +199,7 @@ impl<'a> MachoContainer<'a> {
                 single.add_rpath(new_rpath)?;
 
                 // save back changed data
-                // TODO: think how to overcome clonning again
+                // TODO: think how to overcome cloning again
                 self.data = single.data.clone();
             }
             MachoType::Fat(fat) => {
@@ -227,7 +227,7 @@ impl<'a> MachoContainer<'a> {
                 single.change_rpath(old_rpath, new_rpath)?;
 
                 // save back changed data
-                // TODO: think how to overcome clonning again
+                // TODO: think how to overcome cloning again
                 self.data = single.data.clone();
             }
             MachoType::Fat(fat) => {
@@ -254,7 +254,7 @@ impl<'a> MachoContainer<'a> {
                 single.remove_rpath(old_rpath)?;
 
                 // save back changed data
-                // TODO: think how to overcome clonning again
+                // TODO: think how to overcome cloning again
                 self.data = single.data.clone();
             }
             MachoType::Fat(fat) => {
@@ -280,7 +280,7 @@ impl<'a> MachoContainer<'a> {
                 single.change_install_id(new_id)?;
 
                 // save back changed data
-                // TODO: think how to overcome clonning again
+                // TODO: think how to overcome cloning again
                 self.data = single.data.clone();
             }
             MachoType::Fat(fat) => {
@@ -311,7 +311,7 @@ impl<'a> MachoContainer<'a> {
                 single.change_install_name(old_name, new_name)?;
 
                 // save back changed data
-                // TODO: think how to overcome clonning again
+                // TODO: think how to overcome cloning again
                 self.data = single.data.clone();
             }
             MachoType::Fat(fat) => {
@@ -445,7 +445,7 @@ pub enum MachoError {
     #[error("unix archive is not supported as fat file format")]
     UnixArchive,
 
-    #[error("could not determine endianess of the file")]
+    #[error("could not determine endianness of the file")]
     UnknownEndian,
 
     #[error("expected more fat arches than declared in header")]
