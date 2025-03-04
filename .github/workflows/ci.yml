@@ -158,5 +158,13 @@ jobs:
           key: ${{ hashFiles('pixi.lock') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      - name: Ensure Xcode Command Line Tools are installed
+        run: sudo xcode-select --switch /Library/Developer/CommandLineTools
+
+      - name: Check install_name_tool
+        run: which install_name_tool
+
+
+
       - name: Test arwen
         run: cargo test --workspace --all-targets
