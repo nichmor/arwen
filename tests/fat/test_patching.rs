@@ -1,9 +1,7 @@
+/// This test checks if the rpath of a Mach-O file can be changed.
 use arwen::macho::MachoContainer;
 use goblin::mach::{MultiArch, SingleArch};
 use std::path::PathBuf;
-
-/// This test checks if the rpath of a Mach-O file can be changed.
-///
 
 const FAT_BINARY_PATH: &str = "tests/data/fat/i386_x86_64/hello_with_some_rpath.bin";
 const FAT_LIB_PATH: &str = "tests/data/fat/x64_x86_64/fatlib";

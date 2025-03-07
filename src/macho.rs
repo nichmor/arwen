@@ -192,7 +192,7 @@ pub struct MachoContainer<'a> {
     pub data: Vec<u8>,
 }
 
-impl<'a> MachoContainer<'a> {
+impl MachoContainer<'_> {
     pub fn add_rpath(&mut self, new_rpath: &str) -> Result<(), MachoError> {
         match &mut self.inner {
             MachoType::SingleArch(single) => {

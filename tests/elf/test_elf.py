@@ -9,6 +9,10 @@ import subprocess
 import tempfile
 import pytest
 
+# users on MacOs when using bintuils could have greadelf installed instead of readelf
+# by setting this ENV variable we could control which binary to use
+READELF_BINARY = os.environ.get("ARWEN_READELF", "readelf")
+
 
 @pytest.fixture(scope="session")
 def test_env():
@@ -473,10 +477,10 @@ def test_no_default_lib(bin_for_arwen, bin_for_patchelf):
 
     # reading readelf output to check if the flag is set
     patchelf_out = subprocess.run(
-        ["readelf", "-d", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "-d", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "-d", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "-d", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "(FLAGS_1)            Flags: NODEFLIB" in patchelf_out.stdout, (
@@ -493,10 +497,10 @@ def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
     # assert that they exist before clearing
 
     patchelf_out = subprocess.run(
-        ["readelf", "--syms", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "--syms", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
@@ -507,10 +511,10 @@ def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
 
     # reading readelf output to check if the symbol version was removed
     patchelf_out = subprocess.run(
-        ["readelf", "--syms", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "--syms", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "chdir@GLIBC_2.2.5" not in patchelf_out.stdout, (
@@ -528,10 +532,10 @@ def test_add_debug_tag(bin_for_arwen, bin_for_patchelf):
     # assert that they exist before clearing
 
     patchelf_out = subprocess.run(
-        ["readelf", "--syms", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "--syms", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
@@ -542,10 +546,10 @@ def test_add_debug_tag(bin_for_arwen, bin_for_patchelf):
 
     # reading readelf output to check if the symbol version was removed
     patchelf_out = subprocess.run(
-        ["readelf", "--syms", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "--syms", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "chdir@GLIBC_2.2.5" not in patchelf_out.stdout, (
@@ -598,10 +602,10 @@ def test_set_execstack(bin_for_arwen, bin_for_patchelf):
 def test_rename_dynamic_symbols(bin_for_arwen, bin_for_patchelf, tmp_files):
     """Test --rename-dynamic-symbols functionality."""
     patchelf_out = subprocess.run(
-        ["readelf", "--syms", bin_for_patchelf], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
     )
     arwen_out = subprocess.run(
-        ["readelf", "--syms", bin_for_arwen], capture_output=True, text=True
+        [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
     assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
