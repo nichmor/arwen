@@ -20,11 +20,13 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
 
+      - uses: prefix-dev/setup-pixi@v0.8.3
+
       - name: Verify Cargo manifest
         run: cargo check
 
       - name: Run tests
-        run: cargo test --verbose
+        run: pixi run test-py
 
       - name: Publish to crates.io
         env:
