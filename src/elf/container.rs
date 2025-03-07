@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
 use object::elf;
-use object_rewrite::Rewriter;
-use thiserror::Error;
+
+use crate::elf::rewriter::Writer;
+
+use super::ElfError;
 
 pub struct ElfContainer<'a> {
     /// The constructed Mach-O file.
-    pub inner: Rewriter<'a>,
+    pub inner: Writer<'a>,
 
     /// The raw bytes of the Mach-O file.
     pub data: Vec<u8>,
@@ -15,7 +17,7 @@ pub struct ElfContainer<'a> {
 impl<'a> ElfContainer<'a> {
     /// Parse the given bytes and return a new `MachoContainer`.
     pub fn parse(bytes_of_file: &'a [u8]) -> Result<Self, ElfError> {
-        let rewriter = Rewriter::read(bytes_of_file)?;
+        let rewriter = Writer::read(bytes_of_file)?;
         Ok(Self {
             inner: rewriter,
             data: bytes_of_file.to_vec(),
@@ -212,10 +214,4 @@ fn transform_map(map: &HashMap<String, String>) -> HashMap<Vec<u8>, Vec<u8>> {
     map.iter()
         .map(|(k, v)| (k.as_bytes().to_vec(), v.as_bytes().to_vec()))
         .collect()
-}
-
-#[derive(Debug, Error)]
-pub enum ElfError {
-    #[error("error while parsing ELF file")]
-    Parsing(#[from] object_rewrite::Error),
 }
