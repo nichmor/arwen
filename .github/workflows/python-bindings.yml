@@ -34,7 +34,7 @@ jobs:
           submodules: recursive
       - uses: prefix-dev/setup-pixi@v0.8.2
         with:
-          manifest-path: py-rattler/pixi.toml
+          manifest-path: py-arwen/pixi.toml
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: clippy, rustfmt
@@ -45,5 +45,5 @@ jobs:
           pixi run fmt-check
       - name: Run tests
         run: |
-          cd py-rattler
+          cd py-arwen
           pixi run pytest --color=yes
