@@ -1,0 +1,18 @@
+[package]
+name = "py-arwen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "arwen"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.23.3"
+arwen = { path = "../../arwen" }
+thiserror = "2.0.11"
+object = { version = "0.36.7", features = ["write", "build"] }
+
+# Prevent package from thinking it's in the workspace
+[workspace]

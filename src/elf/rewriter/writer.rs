@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs,
+    fs, mem,
     path::Path,
 };
 
@@ -642,6 +642,20 @@ impl<'data> Writer<'data> {
         self.elf_finalize()?;
         let mut buffer = object::write::StreamingBuffer::new(w);
         self.builder.write(&mut buffer).map_err(ElfError::Write)?;
+        buffer.result().map_err(ElfError::Io)
+    }
+
+    /// Write the builded/patched ELF file to a path.
+    pub fn write_to_path(&mut self, path: &Path) -> Result<()> {
+        let file_writer = fs::File::create(path).map_err(ElfError::Io)?;
+
+        self.elf_finalize()?;
+        let mut buffer = object::write::StreamingBuffer::new(file_writer);
+        let new_builder = build::elf::Builder::new(self.builder.endian, self.builder.is_64);
+
+        let builder = mem::replace(&mut self.builder, new_builder);
+
+        builder.write(&mut buffer).map_err(ElfError::Write)?;
         buffer.result().map_err(ElfError::Io)
     }
 
