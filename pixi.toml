@@ -12,6 +12,7 @@ rust = "~=1.81.0"
 ruby = "~=3.4.1"
 pytest = ">=8.3.4,<9"
 python = ">=3.13.2,<3.14"
+maturin = ">=1.8.2,<2"
 
 [feature.lint.dependencies]
 actionlint = ">=1.7.7,<2"

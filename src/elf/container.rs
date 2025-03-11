@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use object::elf;
 
@@ -201,6 +204,11 @@ impl<'a> ElfContainer<'a> {
 
         self.inner.elf_rename_dynamic_symbols(&symbols);
 
+        Ok(())
+    }
+
+    pub fn write_to_path(&mut self, path: &Path) -> Result<(), ElfError> {
+        self.inner.write_to_path(path)?;
         Ok(())
     }
 

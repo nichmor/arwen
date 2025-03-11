@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-
+exclude = ["py-arwen/*"]
 
 [workspace.package]
 authors = ["nichita morcotilo <nmorkotilo@gmail.com>"]
