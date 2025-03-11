@@ -16,6 +16,8 @@ fmt-rust = "cargo fmt --all"
 lint-python = "ruff check ."
 lint-rust = "cargo clippy --all"
 
+lint = { depends-on = ["lint-python", "lint-rust"] }
+
 
 # checks for the CI
 fmt-rust-check = "cargo fmt --all --check"
