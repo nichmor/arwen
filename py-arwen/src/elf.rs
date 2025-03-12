@@ -221,18 +221,3 @@ impl PyElfContainer {
             .map_err(PyMachoError::from)?)
     }
 }
-
-// pub(crate) fn register(py: Python<'_>, m: &PyModule) -> PyResult<()> {
-//     let submod = PyModule::new(py, "elf")?;
-
-//     // Register the exceptions
-//     submod.add("ElfError", py.get_type::<PyElfError>())?;
-
-//     // Register the class
-//     submod.add_class::<PyElfContainer>()?;
-
-//     // Add the submodule to the parent module
-//     m.add_submodule(submod)?;
-
-//     Ok(())
-// }
