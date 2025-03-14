@@ -147,7 +147,7 @@ fn change_install_name_and_codesign(base_binary: &str, tool: &Tool) -> std::io::
 #[test]
 fn test_add_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let data = package_dir.join("tests/data/hello_with_rpath");
+    let data = package_dir.join("tests/data/macho/x64/hello_with_rpath");
 
     let temp_folder = tempdir().unwrap().path().join("test_add_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
@@ -175,7 +175,7 @@ fn test_add_rpath() {
 #[test]
 fn test_remove_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let data = package_dir.join("tests/data/hello_with_rpath");
+    let data = package_dir.join("tests/data/macho/x64/hello_with_rpath");
 
     let temp_folder = tempdir().unwrap().path().join("test_remove_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
@@ -203,7 +203,7 @@ fn test_remove_rpath() {
 #[test]
 fn test_change_rpath() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let data = package_dir.join("tests/data/hello_with_rpath");
+    let data = package_dir.join("tests/data/macho/x64/hello_with_rpath");
 
     let temp_folder = tempdir().unwrap().path().join("test_change_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
@@ -232,7 +232,7 @@ fn test_change_rpath() {
 #[test]
 fn test_change_install_name() {
     let package_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let data = package_dir.join("tests/data/hello_with_rpath");
+    let data = package_dir.join("tests/data/macho/x64/hello_with_rpath");
 
     let temp_folder = tempdir().unwrap().path().join("test_change_install_name");
     fs::create_dir_all(&temp_folder).unwrap();

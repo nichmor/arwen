@@ -1,8 +1,0 @@
----
-source: tests/fat/test_patching.rs
-expression: changed_macho.libs
----
-[
-    "self",
-    "very_very_very_very_very_very_very_longid",
-]
