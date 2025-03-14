@@ -48,7 +48,7 @@ jobs:
           args: --out dist
       - name: "Test sdist"
         run: |
-          rustup default $(cat rust-toolchain)
+          rustup default "$(cat rust-toolchain)"
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.tar.gz --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload sdist"
@@ -158,7 +158,6 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: '2_28'
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --out dist
       - uses: uraimo/run-on-arch-action@v2
         if: matrix.platform.arch != 'ppc64'
@@ -207,7 +206,6 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --out dist
       - uses: uraimo/run-on-arch-action@v2
         if: matrix.platform.arch != 'ppc64'
@@ -304,7 +302,6 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
           args: --release --out dist
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
       - uses: uraimo/run-on-arch-action@v2
         name: Test wheel
         with:
