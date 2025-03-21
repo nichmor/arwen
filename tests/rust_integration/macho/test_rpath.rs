@@ -4,6 +4,10 @@ use std::path::PathBuf;
 use rstest::rstest;
 use tempfile::tempdir;
 
+#[cfg(not(target_os = "macos"))]
+use crate::macho::common::run_command;
+
+#[cfg(target_os = "macos")]
 use crate::macho::common::{calculate_md5_hash, codesign_binary, run_command};
 
 use super::common::Tool;
