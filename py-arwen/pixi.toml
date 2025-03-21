@@ -21,7 +21,7 @@ lint = { depends-on = ["lint-python", "lint-rust"] }
 
 # checks for the CI
 fmt-rust-check = "cargo fmt --all --check"
-fmt-python-check = "ruff format rattler examples tests --diff"
+fmt-python-check = "ruff format arwen tests --diff"
 fmt-check = { depends-on = ["fmt-python-check", "fmt-rust-check"] }
 
 
