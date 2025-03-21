@@ -1,7 +1,7 @@
 use arwen::elf;
 use arwen::macho;
 use pyo3::{create_exception, exceptions::PyException, PyErr};
-use std::{error::Error, io};
+use std::error::Error;
 
 #[derive(Debug, thiserror::Error)]
 #[allow(clippy::enum_variant_names)]

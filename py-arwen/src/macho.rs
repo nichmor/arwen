@@ -1,5 +1,4 @@
-use arwen::macho::{MachoContainer, MachoError};
-use pyo3::create_exception;
+use arwen::macho::MachoContainer;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use std::fs;
