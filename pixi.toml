@@ -14,6 +14,8 @@ pytest = ">=8.3.4,<9"
 python = ">=3.13.2,<3.14"
 maturin = ">=1.8.2,<2"
 llvm-tools = ">=20.1.0,<21"
+
+[target.osx.dependencies]
 patchelf = ">=0.17.2,<0.19"
 
 [feature.lint.dependencies]
