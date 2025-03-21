@@ -146,19 +146,6 @@ We have comprehensive integration tests to validate feature parity with `install
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
 
-<!-- ## Development
-
-### Mac OS
-Right now `binutils` or `elf-utils` are not available on `conda-forge` for macos platforms.
-You need to install them with brew
-```sh
-# install binutils which contains readelf
-brew install binutils
-# by default they are all prefixed with g
-# you need to create a symlink to readelf
-sudo ln -s /usr/local/bin/greadelf /usr/local/bin/readelf
-``` -->
-
 ## Status
 
 `arwen` is currently in active development. The `API` and `CLI` are subject to change to improve user experience.
