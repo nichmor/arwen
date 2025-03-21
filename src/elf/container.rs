@@ -10,10 +10,10 @@ use crate::elf::rewriter::Writer;
 use super::ElfError;
 
 pub struct ElfContainer<'a> {
-    /// The constructed Mach-O file.
+    /// The writer for Elf.
     pub inner: Writer<'a>,
 
-    /// The raw bytes of the Mach-O file.
+    /// The raw bytes of the ELF file.
     pub data: Vec<u8>,
 }
 
