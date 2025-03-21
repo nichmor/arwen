@@ -1,1 +1,2 @@
+mod elf;
 mod macho;

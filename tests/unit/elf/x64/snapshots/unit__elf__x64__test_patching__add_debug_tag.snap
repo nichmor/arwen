@@ -1,0 +1,136 @@
+---
+source: tests/unit/elf/x64/test_patching.rs
+expression: changed_elf.dynamic
+---
+Some(
+    Dynamic {
+        dyns: [
+            Dyn {
+                d_tag: "DT_RUNPATH",
+                d_val: 0x5833,
+            },
+            Dyn {
+                d_tag: "DT_NEEDED",
+                d_val: 0x7fc6,
+            },
+            Dyn {
+                d_tag: "DT_NEEDED",
+                d_val: 0x8007,
+            },
+            Dyn {
+                d_tag: "DT_NEEDED",
+                d_val: 0x7fbc,
+            },
+            Dyn {
+                d_tag: "DT_INIT",
+                d_val: 0x41e408,
+            },
+            Dyn {
+                d_tag: "DT_FINI",
+                d_val: 0x4a9228,
+            },
+            Dyn {
+                d_tag: "DT_HASH",
+                d_val: 0x3fe2d0,
+            },
+            Dyn {
+                d_tag: "DT_GNU_HASH",
+                d_val: 0x402408,
+            },
+            Dyn {
+                d_tag: "DT_STRTAB",
+                d_val: 0x4120e0,
+            },
+            Dyn {
+                d_tag: "DT_SYMTAB",
+                d_val: 0x405a50,
+            },
+            Dyn {
+                d_tag: "DT_STRSZ",
+                d_val: 0x8012,
+            },
+            Dyn {
+                d_tag: "DT_SYMENT",
+                d_val: 0x18,
+            },
+            Dyn {
+                d_tag: "DT_DEBUG",
+                d_val: 0x0,
+            },
+            Dyn {
+                d_tag: "DT_PLTGOT",
+                d_val: 0x6d91f0,
+            },
+            Dyn {
+                d_tag: "DT_PLTRELSZ",
+                d_val: 0x11d0,
+            },
+            Dyn {
+                d_tag: "DT_PLTREL",
+                d_val: 0x7,
+            },
+            Dyn {
+                d_tag: "DT_JMPREL",
+                d_val: 0x41d238,
+            },
+            Dyn {
+                d_tag: "DT_RELA",
+                d_val: 0x41d178,
+            },
+            Dyn {
+                d_tag: "DT_RELASZ",
+                d_val: 0xc0,
+            },
+            Dyn {
+                d_tag: "DT_RELAENT",
+                d_val: 0x18,
+            },
+            Dyn {
+                d_tag: "DT_VERNEED",
+                d_val: 0x41d108,
+            },
+            Dyn {
+                d_tag: "DT_VERNEEDNUM",
+                d_val: 0x2,
+            },
+            Dyn {
+                d_tag: "DT_VERSYM",
+                d_val: 0x41c078,
+            },
+            Dyn {
+                d_tag: "DT_NULL",
+                d_val: 0x0,
+            },
+        ],
+        info: DynamicInfo {
+            rela: 0x1f178,
+            relasz: 192,
+            relaent: 24,
+            relacount: 0,
+            gnu_hash: 0x4408,
+            hash: 0x2d0,
+            strtab: 0x140e0,
+            strsz: 32786,
+            symtab: 0x7a50,
+            syment: 24,
+            pltgot: 0xdb1f0,
+            pltrelsz: 4560,
+            pltrel: 7,
+            jmprel: 0x1f238,
+            verdef: 0x0,
+            verdefnum: 0,
+            verneed: 0x1f108,
+            verneednum: 2,
+            versym: 0x1e078,
+            init: 0x20408,
+            fini: 0xab228,
+            init_array: 0x0,
+            init_arraysz: 0,
+            needed_count: 3,
+            flags: 0x000000 [],
+            flags_1: 0x000000 [],
+            soname: 0,
+            textrel: false,
+        },
+    },
+)

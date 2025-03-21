@@ -1,0 +1,10 @@
+---
+source: tests/unit/elf/x64/test_patching.rs
+expression: changed_elf.libraries
+---
+[
+    "my_dtneed",
+    "libncurses.so.5",
+    "libdl.so.2",
+    "libc.so.6",
+]

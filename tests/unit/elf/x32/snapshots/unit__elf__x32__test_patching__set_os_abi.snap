@@ -1,0 +1,20 @@
+---
+source: tests/unit/elf/x32/test_patching.rs
+expression: changed_macho.header
+---
+Header {
+    e_ident: [127, 69, 76, 70, 1, 1, 1, 9, 0, 0, 0, 0, 0, 0, 0, 0],
+    e_type: "EXEC",
+    e_machine: 0x3,
+    e_version: 0x1,
+    e_entry: 0x8062150,
+    e_phoff: 0x34,
+    e_shoff: 0xc9c34,
+    e_flags: 0,
+    e_ehsize: 52,
+    e_phentsize: 32,
+    e_phnum: 11,
+    e_shentsize: 40,
+    e_shnum: 28,
+    e_shstrndx: 27,
+}

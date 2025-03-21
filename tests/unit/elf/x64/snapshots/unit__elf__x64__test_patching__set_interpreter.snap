@@ -1,0 +1,7 @@
+---
+source: tests/unit/elf/x64/test_patching.rs
+expression: changed_elf.interpreter
+---
+Some(
+    "/my/ld-linux.so.",
+)

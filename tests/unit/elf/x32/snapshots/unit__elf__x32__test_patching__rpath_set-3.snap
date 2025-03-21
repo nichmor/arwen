@@ -1,0 +1,5 @@
+---
+source: tests/unit/elf/x32/test_patching.rs
+expression: changed_macho_data.len()
+---
+860452
