@@ -139,6 +139,8 @@ jobs:
         run: |
           pixi run test
 
+      - name: Install patchelf
+        run: sudo apt-get install -y patchelf
       - name: Test arwen using python tests
         run: pixi run test-py
 
