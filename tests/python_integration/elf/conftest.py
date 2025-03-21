@@ -13,8 +13,6 @@ def tests_elf_data_dir() -> Path:
 
 @pytest.fixture(params=[p for p in tests_elf_data_dir().glob("*/exec/*")])
 def bin_for_patchelf(tmp_files, request):
-    # test_linux_bash = os.path.join(request., "linux-x64-bash")
-
     test_bin_patchelf = os.path.join(tmp_files, "test_patchelf")
     shutil.copy2(request.param, test_bin_patchelf)
     return test_bin_patchelf
@@ -22,8 +20,6 @@ def bin_for_patchelf(tmp_files, request):
 
 @pytest.fixture(params=[p for p in tests_elf_data_dir().glob("*/exec/*")])
 def bin_for_arwen(tmp_files, request):
-    # test_linux_bash = os.path.join(tests_elf_data_dir, "linux-x64-bash")
-
     test_bin_arwen = os.path.join(tmp_files, "test_arwen")
     shutil.copy2(request.param, test_bin_arwen)
     return test_bin_arwen
