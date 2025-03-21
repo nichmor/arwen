@@ -12,14 +12,16 @@ use crate::macho::common::{calculate_md5_hash, codesign_binary, run_command};
 
 use super::common::Tool;
 
+#[cfg(target_os = "macos")]
+const INSTALL_NAME_TOOL: &str = "install_name_tool";
+
+#[cfg(not(target_os = "macos"))]
+const INSTALL_NAME_TOOL: &str = "llvm-install-name-tool";
+
 fn add_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
     match tool {
         Tool::InstallNameTool => {
-            run_command(
-                "install_name_tool",
-                &["-add_rpath", "new_graf", base_binary],
-            )
-            .unwrap();
+            run_command(INSTALL_NAME_TOOL, &["-add_rpath", "new_graf", base_binary]).unwrap();
         }
         Tool::Arwen => {
             run_command("arwen", &["macho", "add-rpath", "new_graf", base_binary]).unwrap();
@@ -33,7 +35,7 @@ fn remove_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
     match tool {
         Tool::InstallNameTool => {
             run_command(
-                "install_name_tool",
+                INSTALL_NAME_TOOL,
                 &["-delete_rpath", "path_graf", base_binary],
             )
             .unwrap();
@@ -54,7 +56,7 @@ fn change_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
     match tool {
         Tool::InstallNameTool => {
             run_command(
-                "install_name_tool",
+                INSTALL_NAME_TOOL,
                 &["-rpath", "path_graf", "test_path", base_binary],
             )
             .unwrap();
@@ -80,7 +82,7 @@ fn change_install_name(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
     match tool {
         Tool::InstallNameTool => {
             run_command(
-                "install_name_tool",
+                INSTALL_NAME_TOOL,
                 &[
                     "-change",
                     "/usr/lib/libSystem.B.dylib",
@@ -137,7 +139,7 @@ fn test_add_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
     let rpath_load_command =
         run_command("llvm-otool", &["-l", base_arwen_binary.to_str().unwrap()]).unwrap();
 
-    let expected_rpath = r#"path path_graf (offset 12)"#;
+    let expected_rpath = r#"path new_graf (offset 12)"#;
 
     assert!(String::from_utf8(rpath_load_command.stdout)
         .unwrap()
