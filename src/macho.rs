@@ -11,8 +11,7 @@ use thiserror::Error;
 use crate::{
     commands::{CommandBuilderError, DlibCommandBuilder, RpathCommandBuilder},
     patcher::{
-        find_codesign_command, find_dylib_command, find_dylib_id, find_rpath_command,
-        insert_command, remove_load_command,
+        find_dylib_command, find_dylib_id, find_rpath_command, insert_command, remove_load_command,
     },
 };
 
@@ -160,30 +159,6 @@ impl SingleMachO<'_> {
             new_dylib.cmdsize,
             new_dylib_command_buffer,
         )?;
-
-        Ok(())
-    }
-
-    /// Removes codesign load command from macho
-    pub fn delete_codesign(&mut self) -> Result<(), MachoError> {
-        let mut header = HeaderContainer::new(self.inner.header, self.ctx);
-
-        // now based on the index, we need to find the RpathCommand from the load commands
-        let (load_command, linkedit_command) =
-            find_codesign_command(&self.inner.load_commands).ok_or(MachoError::CodesignMissing)?;
-
-        // remove the load command itself
-        remove_load_command(&mut self.data, &mut header, load_command)?;
-
-        // // remove the data from segments
-        // // Write zero bytes as padding
-        // let mut zeroing_buffer = vec![0u8; linkedit_command.datasize as usize];
-        // zeroing_buffer.fill(0);
-
-        let drain_offset = linkedit_command.dataoff + linkedit_command.datasize;
-        // self.data[linkedit_command.dataoff as usize..drain_offset as usize].copy_from_slice(&zeroing_buffer);
-        self.data
-            .drain(linkedit_command.dataoff as usize..drain_offset as usize);
 
         Ok(())
     }
@@ -346,33 +321,6 @@ impl MachoContainer<'_> {
                     // save back changed data
                     // by writing one piece of macho back into the archive
 
-                    let arch = macho.arch;
-                    self.data.splice(
-                        arch.offset as usize..arch.offset as usize + arch.size as usize,
-                        macho.inner.data.clone(),
-                    );
-                }
-            }
-        }
-        Ok(())
-    }
-
-    /// Removes codesign load command from macho
-    pub fn delete_codesign(&mut self) -> Result<(), MachoError> {
-        match &mut self.inner {
-            MachoType::SingleArch(single) => {
-                single.delete_codesign()?;
-
-                // save back changed data
-                // TODO: think how to overcome cloning again
-                self.data = single.data.clone();
-            }
-            MachoType::Fat(fat) => {
-                for macho in &mut fat.archs {
-                    macho.inner.delete_codesign()?;
-
-                    // save back changed data
-                    // by writing one piece of macho back into the archive
                     let arch = macho.arch;
                     self.data.splice(
                         arch.offset as usize..arch.offset as usize + arch.size as usize,
