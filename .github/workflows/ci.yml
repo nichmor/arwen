@@ -135,7 +135,13 @@ jobs:
           key: ${{ hashFiles('pixi.lock') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Test arwen
+      - name: Test arwen with cargo
+        run: |
+          pixi run test
+
+      - name: Install patchelf
+        run: sudo apt-get install -y patchelf
+      - name: Test arwen using python tests
         run: pixi run test-py
 
 
@@ -156,13 +162,12 @@ jobs:
           key: ${{ hashFiles('pixi.lock') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Ensure Xcode Command Line Tools are installed
-        run: sudo xcode-select --switch /Library/Developer/CommandLineTools
-
       - name: Check install_name_tool
         run: which install_name_tool
 
+      - name: Test arwen using python tests
+        run: pixi run test-py
+
       - name: Test arwen
         run: |
-          cargo install --path .
-          cargo test --workspace --all-targets
+          pixi run test

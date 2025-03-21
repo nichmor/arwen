@@ -1,0 +1,9 @@
+---
+source: tests/unit/macho/fat/test_patching.rs
+expression: changed_macho.rpaths
+---
+[
+    "made_up_path",
+    "path_graf",
+    "abababababababababababaabbababababababababab",
+]

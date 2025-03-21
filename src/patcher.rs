@@ -19,7 +19,6 @@ pub fn remove_load_command(
     load_command: &LoadCommand,
 ) -> Result<(), MachoError> {
     // Remove entire command from the buffer
-
     let drain_offset = load_command.offset + load_command.command.cmdsize();
     buffer.drain(load_command.offset..drain_offset);
 

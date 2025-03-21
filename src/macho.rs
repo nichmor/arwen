@@ -465,4 +465,7 @@ pub enum MachoError {
 
     #[error("LC_ID_DYLIB is missing or file is not a shared library")]
     DylibIdMissing,
+
+    #[error("codesign section is missing")]
+    CodesignMissing,
 }

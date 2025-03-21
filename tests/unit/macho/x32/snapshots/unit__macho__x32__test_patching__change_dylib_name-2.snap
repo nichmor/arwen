@@ -1,0 +1,8 @@
+---
+source: tests/unit/macho/x32/test_patching.rs
+expression: changed_macho.libs
+---
+[
+    "i386/libhello.dylib",
+    "very_very_very_very_very_very_very_longid",
+]

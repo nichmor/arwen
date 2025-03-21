@@ -1,9 +1,8 @@
-use arwen::elf::{ElfContainer, ElfError};
+use arwen::elf::ElfContainer;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use std::collections::HashMap;
 use std::fs;
-use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
