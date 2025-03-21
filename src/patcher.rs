@@ -1,6 +1,6 @@
 use std::vec;
 
-use goblin::mach::load_command::{self, LoadCommand, RpathCommand};
+use goblin::mach::load_command::{self, LinkeditDataCommand, LoadCommand, RpathCommand};
 use goblin::mach::load_command::{CommandVariant::*, DylibCommand};
 
 use scroll::Pwrite;
@@ -19,7 +19,6 @@ pub fn remove_load_command(
     load_command: &LoadCommand,
 ) -> Result<(), MachoError> {
     // Remove entire command from the buffer
-
     let drain_offset = load_command.offset + load_command.command.cmdsize();
     buffer.drain(load_command.offset..drain_offset);
 
@@ -143,6 +142,19 @@ pub fn find_dylib_id(
     for command in commands {
         if let IdDylib(id_dylib) = &command.command {
             return Some((command, id_dylib));
+        }
+    }
+
+    None
+}
+
+/// Find the codesign command.
+pub fn find_codesign_command(
+    commands: &[load_command::LoadCommand],
+) -> Option<(&LoadCommand, &LinkeditDataCommand)> {
+    for command in commands {
+        if let CodeSignature(linkedit_data) = &command.command {
+            return Some((command, linkedit_data));
         }
     }
 

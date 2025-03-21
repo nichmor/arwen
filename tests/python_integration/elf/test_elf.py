@@ -4,211 +4,11 @@ Test suite for comparing arwen and patchelf functionality using pytest.
 """
 
 import os
-import shutil
 import subprocess
-import tempfile
-import pytest
 
 # users on MacOs when using bintuils could have greadelf installed instead of readelf
 # by setting this ENV variable we could control which binary to use
-READELF_BINARY = os.environ.get("ARWEN_READELF", "readelf")
-
-
-@pytest.fixture(scope="session")
-def test_env():
-    """Create test environment and compile test binaries."""
-    # Create temporary test directory
-    test_dir = tempfile.mkdtemp(prefix="arwen_test_")
-    libs_dir = os.path.join(test_dir, "libs")
-    os.makedirs(libs_dir, exist_ok=True)
-
-    # Save current directory
-    original_dir = os.getcwd()
-
-    # Create test files
-    _create_test_files(test_dir)
-
-    # Compile test files
-    _compile_test_files(test_dir, libs_dir)
-
-    print(f"Test environment created at: {test_dir}")
-
-    # Return test environment details
-    yield {"test_dir": test_dir, "libs_dir": libs_dir, "original_dir": original_dir}
-
-    # Clean up test environment
-    shutil.rmtree(test_dir)
-    print("Test environment cleaned up")
-
-
-def _create_test_files(test_dir):
-    """Create source files for testing."""
-    # libfoo.c
-    with open(os.path.join(test_dir, "libfoo.c"), "w") as f:
-        f.write("""
-#include <stdio.h>
-
-void foo() {
-    printf("Hello from libfoo!\\n");
-}
-""")
-
-    # libbar.c
-    with open(os.path.join(test_dir, "libbar.c"), "w") as f:
-        f.write("""
-#include <stdio.h>
-
-void bar() {
-    printf("Hello from libbar!\\n");
-}
-""")
-
-    # main.c
-    with open(os.path.join(test_dir, "main.c"), "w") as f:
-        f.write("""
-#include <stdio.h>
-
-extern void foo();
-
-int main() {
-    printf("Starting main program\\n");
-    foo();
-    return 0;
-}
-""")
-
-    # main_with_bar.c
-    with open(os.path.join(test_dir, "main_with_bar.c"), "w") as f:
-        f.write("""
-#include <stdio.h>
-
-extern void foo();
-extern void bar();
-
-int main() {
-    printf("Starting main program\\n");
-    foo();
-    bar();
-    return 0;
-}
-""")
-
-
-def _compile_test_files(test_dir, libs_dir):
-    """Compile test files."""
-    # Compile libfoo.so
-    subprocess.run(
-        [
-            "gcc",
-            "-shared",
-            "-o",
-            os.path.join(libs_dir, "libfoo.so"),
-            os.path.join(test_dir, "libfoo.c"),
-            "-fPIC",
-        ],
-        check=True,
-    )
-
-    # Compile libbar.so
-    subprocess.run(
-        [
-            "gcc",
-            "-shared",
-            "-o",
-            os.path.join(libs_dir, "libbar.so"),
-            os.path.join(test_dir, "libbar.c"),
-            "-fPIC",
-        ],
-        check=True,
-    )
-
-    # Compile main with rpath
-    subprocess.run(
-        [
-            "gcc",
-            "-o",
-            os.path.join(test_dir, "main_with_rpath"),
-            os.path.join(test_dir, "main.c"),
-            "-L",
-            libs_dir,
-            "-lfoo",
-            "-Wl,-rpath,$ORIGIN/libs",
-        ],
-        check=True,
-    )
-
-    # Compile main without rpath
-    subprocess.run(
-        [
-            "gcc",
-            "-o",
-            os.path.join(test_dir, "main_no_rpath"),
-            os.path.join(test_dir, "main.c"),
-            "-L",
-            libs_dir,
-            "-lfoo",
-        ],
-        check=True,
-    )
-
-    # Compile main with dependencies
-    subprocess.run(
-        [
-            "gcc",
-            "-o",
-            os.path.join(test_dir, "main_with_deps"),
-            os.path.join(test_dir, "main_with_bar.c"),
-            "-L",
-            libs_dir,
-            "-lfoo",
-            "-lbar",
-            "-Wl,-rpath,$ORIGIN/libs",
-        ],
-        check=True,
-    )
-
-
-# @pytest.fixture
-# def test_files(test_env):
-#     """Set up test files for each test."""
-#     test_dir = test_env["test_dir"]
-#     libs_dir = test_env["libs_dir"]
-
-#     # Create fresh copies of binaries for each test
-#     # test_bin = os.path.join(test_dir, "main_with_rpath")
-
-
-#     current_dir = Path(__file__).parent
-
-#     test_linux_bash = os.path.join(current_dir, "linux-x64-bash")
-
-
-#     test_bin_patchelf = os.path.join(test_dir, "test_patchelf")
-#     test_bin_arwen = os.path.join(test_dir, "test_arwen")
-
-#     shutil.copy2(test_linux_bash, test_bin_patchelf)
-#     shutil.copy2(test_linux_bash, test_bin_arwen)
-
-#     # # Library for testing
-#     # test_lib = os.path.join(libs_dir, "libfoo.so")
-#     # test_lib_copy1 = os.path.join(libs_dir, "libfoo_patchelf.so")
-#     # test_lib_copy2 = os.path.join(libs_dir, "libfoo_arwen.so")
-
-#     # shutil.copy2(test_lib, test_lib_copy1)
-#     # shutil.copy2(test_lib, test_lib_copy2)
-
-#     return {
-#         "test_bin_patchelf": test_bin_patchelf,
-#         "test_bin_arwen": test_bin_arwen,
-#         # "test_bin": test_bin,
-#         # "test_bin_copy1": test_bin_copy1,
-#         # "test_bin_copy2": test_bin_copy2,
-#         # "test_lib": test_lib,
-#         # "test_lib_copy1": test_lib_copy1,
-#         # "test_lib_copy2": test_lib_copy2,
-#         # "test_dir": test_dir,
-#         # "libs_dir": libs_dir
-#     }
+READELF_BINARY = os.environ.get("ARWEN_READELF", "llvm-readelf")
 
 
 def run_command(cmd, check=True):
@@ -223,21 +23,8 @@ def run_command(cmd, check=True):
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
-# def test_print_interpreter(test_files):
-#     """Test --print-interpreter functionality."""
-#     patchelf_out, _, _ = run_command(["patchelf", "--print-interpreter", test_files["test_bin_copy1"]])
-#     arwen_out, _, _ = run_command(["arwen", "--print-interpreter", test_files["test_bin_copy2"]])
-
-#     assert patchelf_out == arwen_out, "Interpreters don't match"
-
-
 def test_set_interpreter(arwen, bin_for_arwen, bin_for_patchelf):
     """Test --set-interpreter functionality."""
-
-    # Get original interpreter
-    orig_interp, _, _ = run_command(
-        ["patchelf", "--print-interpreter", bin_for_patchelf]
-    )
 
     # Set a test interpreter
     test_interp = "/lib64/test-ld-linux.so"
@@ -252,14 +39,6 @@ def test_set_interpreter(arwen, bin_for_arwen, bin_for_patchelf):
     arwen_out, _, _ = run_command(["patchelf", "--print-interpreter", bin_for_arwen])
 
     assert patchelf_out == arwen_out, "Set interpreter doesn't match"
-
-
-# def test_print_rpath(test_files):
-#     """Test --print-rpath functionality."""
-#     patchelf_out, _, _ = run_command(["patchelf", "--print-rpath", test_files["test_bin_copy1"]])
-#     arwen_out, _, _ = run_command(["arwen", "--print-rpath", test_files["test_bin_copy2"]])
-
-#     assert patchelf_out == arwen_out, "RPATHs don't match"
 
 
 def test_set_rpath(bin_for_arwen, bin_for_patchelf):
@@ -482,19 +261,14 @@ def test_no_default_lib(bin_for_arwen, bin_for_patchelf):
     arwen_out = subprocess.run(
         [READELF_BINARY, "-d", bin_for_arwen], capture_output=True, text=True
     )
-
-    assert "(FLAGS_1)            Flags: NODEFLIB" in patchelf_out.stdout, (
-        "no-default-lib flag not set"
-    )
-    assert "(FLAGS_1)            Flags: NODEFLIB" in arwen_out.stdout, (
-        "no-default-lib flag not set"
-    )
+    assert "(FLAGS_1)    NODEFLIB" in patchelf_out.stdout, "no-default-lib flag not set"
+    assert "(FLAGS_1)    NODEFLIB" in arwen_out.stdout, "no-default-lib flag not set"
 
 
 def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
     """Test --clear-symbol-versions functionality."""
-    # we now that linux-x64-bash has symbol versions for chdir@GLIBC_2.2.5
-    # assert that they exist before clearing
+    # we now assert that symbol versions for chdir@GLIBC_2*
+    # existed before clearing
 
     patchelf_out = subprocess.run(
         [READELF_BINARY, "--syms", bin_for_patchelf], capture_output=True, text=True
@@ -503,8 +277,8 @@ def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
         [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
-    assert "chdir@GLIBC_2.2.5" in arwen_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in patchelf_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in arwen_out.stdout, "symbol versions not found"
 
     run_command(["patchelf", "--clear-symbol-version", "chdir", bin_for_patchelf])
     run_command(["arwen", "elf", "clear-symbol-version", "chdir", bin_for_arwen])
@@ -517,10 +291,8 @@ def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
         [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" not in patchelf_out.stdout, (
-        "symbol versions werent removed"
-    )
-    assert "chdir@GLIBC_2.2.5" not in arwen_out.stdout, "symbol versions werent removed"
+    assert "chdir@GLIBC_2" not in patchelf_out.stdout, "symbol versions werent removed"
+    assert "chdir@GLIBC_2" not in arwen_out.stdout, "symbol versions werent removed"
 
     assert "chdir" in patchelf_out.stdout, "symbol versions werent removed"
     assert "chdir" in arwen_out.stdout, "symbol versions werent removed"
@@ -528,7 +300,7 @@ def test_clear_symbol_versions(bin_for_arwen, bin_for_patchelf):
 
 def test_add_debug_tag(bin_for_arwen, bin_for_patchelf):
     """Test --add-debug-tag functionality."""
-    # we now that linux-x64-bash has symbol versions for chdir@GLIBC_2.2.5
+    # we now that linux-x64-bash has symbol versions for chdir@GLIBC_2
     # assert that they exist before clearing
 
     patchelf_out = subprocess.run(
@@ -538,8 +310,8 @@ def test_add_debug_tag(bin_for_arwen, bin_for_patchelf):
         [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
-    assert "chdir@GLIBC_2.2.5" in arwen_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in patchelf_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in arwen_out.stdout, "symbol versions not found"
 
     run_command(["patchelf", "--clear-symbol-version", "chdir", bin_for_patchelf])
     run_command(["arwen", "elf", "clear-symbol-version", "chdir", bin_for_arwen])
@@ -552,10 +324,8 @@ def test_add_debug_tag(bin_for_arwen, bin_for_patchelf):
         [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" not in patchelf_out.stdout, (
-        "symbol versions werent removed"
-    )
-    assert "chdir@GLIBC_2.2.5" not in arwen_out.stdout, "symbol versions werent removed"
+    assert "chdir@GLIBC_2" not in patchelf_out.stdout, "symbol versions werent removed"
+    assert "chdir@GLIBC_2" not in arwen_out.stdout, "symbol versions werent removed"
 
     assert "chdir" in patchelf_out.stdout, "symbol versions werent removed"
     assert "chdir" in arwen_out.stdout, "symbol versions werent removed"
@@ -608,8 +378,8 @@ def test_rename_dynamic_symbols(bin_for_arwen, bin_for_patchelf, tmp_files):
         [READELF_BINARY, "--syms", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" in patchelf_out.stdout, "symbol versions not found"
-    assert "chdir@GLIBC_2.2.5" in arwen_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in patchelf_out.stdout, "symbol versions not found"
+    assert "chdir@GLIBC_2" in arwen_out.stdout, "symbol versions not found"
 
     # write a temporary file to test the rename
     test_renmap = tmp_files / "renmap.txt"
@@ -628,12 +398,8 @@ def test_rename_dynamic_symbols(bin_for_arwen, bin_for_patchelf, tmp_files):
         ["nm", "-D", bin_for_arwen], capture_output=True, text=True
     )
 
-    assert "chdir@GLIBC_2.2.5" not in patchelf_out.stdout, (
-        "symbol versions werent renamed"
-    )
-    assert "chdir@GLIBC_2.2.5" not in arwen_out.stdout, "symbol versions werent renamed"
+    assert "chdir@GLIBC_2" not in patchelf_out.stdout, "symbol versions werent renamed"
+    assert "chdir@GLIBC_2" not in arwen_out.stdout, "symbol versions werent renamed"
 
-    assert "chdir_new@GLIBC_2.2.5" in patchelf_out.stdout, (
-        "symbol versions werent renamed"
-    )
-    assert "chdir_new@GLIBC_2.2.5" in arwen_out.stdout, "symbol versions werent renamed"
+    assert "chdir_new@GLIBC_2" in patchelf_out.stdout, "symbol versions werent renamed"
+    assert "chdir_new@GLIBC_2" in arwen_out.stdout, "symbol versions werent renamed"

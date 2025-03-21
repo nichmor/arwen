@@ -1,0 +1,5 @@
+---
+source: tests/unit/macho/x64/test_rpath.rs
+expression: macho_container.data.len()
+---
+53040
