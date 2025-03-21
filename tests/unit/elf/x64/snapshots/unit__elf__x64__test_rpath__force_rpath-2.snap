@@ -1,0 +1,5 @@
+---
+source: tests/unit/elf/x64/test_rpath.rs
+expression: changed_elf_data.len()
+---
+934728
