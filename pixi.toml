@@ -3,7 +3,7 @@ authors = ["nichmor <nmorkotilo@gmail.com>"]
 channels = ["conda-forge"]
 description = "Add a short description here"
 name = "arwen"
-platforms = ["osx-arm64", "linux-64"]
+platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
 version = "0.1.0"
 
 
@@ -76,7 +76,7 @@ test-py = { cmd = "pytest -s tests", depends-on = ["install"] }
 
 test-py-ci = { cmd = "pytest -s tests" }
 
-test = { cmd = "cargo test --workspace --all-targets", depends-on = [
+test = { cmd = "RUST_BACKTRACE=1 cargo test --workspace --all-targets", depends-on = [
   "install",
 ] }
 
