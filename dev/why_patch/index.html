@@ -739,18 +739,7 @@ For example, if <code>RPATH=/usr/local/special_libs</code>, it looks for <code>/
 <ul>
 <li><code>Loading</code>: This is the last part. Once <code>libdata.so.1</code> is found the dynamic linker maps its code and data segments into the memory space of the <code>my_app</code> process.</li>
 </ul>
-<p><strong>This is where patching becomes essential.</strong> Tools like <code>arwen</code> allow you to modify the information embedded within the executable <em>after</em> it has been compiled and linked, telling the dynamic linker where to find the necessary libraries in the <em>actual</em> runtime environment.</p>
-<p><strong>Common Scenarios Requiring Patching:</strong></p>
-<p>Here are some frequent situations where you'll need to patch executables or libraries using a tool like <code>arwen</code>:</p>
-<ul>
-<li><strong>Relocation / Non-Standard Installs:</strong>
-    Software is installed in a non-standard location (e.g., <code>/opt/myapp</code>, <code>/home/user/bin</code>) instead of system paths like <code>/usr/bin</code>. Binaries might have been compiled assuming standard library locations.
-    Patch the binaries to add the application's own library directory (e.g., <code>/opt/myapp/lib</code>) to their runtime search path (<code>RPATH</code>/<code>RUNPATH</code> or Mach-O <code>LC_RPATH</code>).</li>
-</ul>
-<ul>
-<li><strong>Cross-Compilation:</strong>
-    When building software for a different architecture or operating system, the embedded paths might reflect the host system's layout, not the target's. Patch the resulting binaries to use paths appropriate for the target system.</li>
-</ul>
+<p><strong>This is where patching becomes essential.</strong> Tools like <code>arwen</code> allow you to modify information within an executable <em>after</em> compilation, a crucial step for making applications <strong>relocatable</strong>. When software is installed in a non-standard directory (e.g., <code>/opt/myapp</code>), its binaries often fail because they were compiled to look for libraries only in standard system paths. <code>arwen</code> solves this by patching the binaries to add the application's own library directory (e.g., <code>/opt/myapp/lib</code>) to their runtime search path (<code>RPATH</code>/<code>RUNPATH</code> or Mach-O <code>LC_RPATH</code>), telling the dynamic linker where to find the necessary libraries in the actual runtime environment.</p>
 
 
 
