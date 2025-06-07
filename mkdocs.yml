@@ -107,7 +107,7 @@ nav:
       - Macho: patching/macho.md
       - Patching an ELF file: patching/patching_elf.md
       - Patching an Macho file: patching/patching_macho.md
-      
+
 
       # - Patching a container: patching/patching_a_container.md
   # - Workspace:
