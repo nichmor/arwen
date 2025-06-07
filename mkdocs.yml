@@ -83,6 +83,11 @@ markdown_extensions:
   - mdx_truly_sane_lists
 
 
+extra:
+  version:
+    provider: mike
+
+
 nav:
   - Getting Started: index.md
   - Why patching binaries?: why_patch.md
