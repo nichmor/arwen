@@ -53,7 +53,7 @@ A simple ELF file structure looks like this:
 
 ### More detailed view of the components
 
-- **`1. ELF Header (Elf64_Ehdr / Elf32_Ehdr)`**
+- **1. ELF Header (Elf64_Ehdr / Elf32_Ehdr)**
   - **Location:** Start of the file (offset 0).
   - **Purpose:** Identifies the file as ELF and provides essential metadata and pointers.
   - **Key Fields:**
@@ -124,8 +124,6 @@ For dynamic linking, the crucial parts are:
     * **`DT_NEEDED`**: (Value points into `.dynstr`) Name of a required library. Modifying the string in `.dynstr` changes the dependency. `arwen` can also add/remove entries in the `.dynamic` array itself.
     * **`DT_RPATH`** / **`DT_RUNPATH`**: (Value points into `.dynstr`) Library search paths. Modifying the string in `.dynstr` changes these paths. Remember `$ORIGIN` is expanded by the linker to the directory of the object being processed.
 
-**How the Dynamic Linker Uses This Information (Simplified version)**
+**How the Dynamic Linker Uses This Information (A simplified overview)**
 
 The dynamic linker (`ld-linux.so.2` or similar), specified by `PT_INTERP` / `DT_INTERP`, reads the `.dynamic` section (found via `PT_DYNAMIC`). It processes `DT_NEEDED` entries to find required libraries, searching in paths derived from `DT_RUNPATH`, `LD_LIBRARY_PATH`, `DT_RPATH`, and system defaults, then loads them into memory (using their own ELF structures) and resolves symbols.
-
-Understanding this workflow, helps understanding how `arwen` modifies an RPATH or a needed library. It's mostly targeting specific entries within the `.dynamic` section or the associated `.dynstr` string table within the ELF file layout.

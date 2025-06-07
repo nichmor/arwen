@@ -69,7 +69,7 @@ How `dyld` finds dependent libraries (`LC_LOAD_DYLIB`) is crucial and often invo
 
 The `LC_RPATH` load command simply contains a path string to be added to this search list.
 
-### How Patching Works with `arwen` (Conceptual)
+### How Patching Works with `arwen`
 
 Patching Mach-O files with a tool like `arwen` typically involves modifying the Load Commands or the data they reference (often strings within the commands themselves or in the `__LINKEDIT` segment).
 
@@ -78,24 +78,13 @@ Some common patching operations include:
 - **Modifying runtime dependencies**.
 This involves adding `LC_RPATH` or removing them. For example, adding `LC_RPATH` command with the path `@loader_path/../Frameworks` to make a binary look inside a sibling `Frameworks` directory for its `@rpath` dependencies.
 
+- **Changing Dependencies:** To make a binary look for a library in a different location, you modify the path string stored within an `LC_LOAD_DYLIB` or `LC_LOAD_WEAK_DYLIB` command. For example, changing `/usr/local/lib/libfoo.dylib` to `@rpath/libfoo.dylib` often requires ensuring an appropriate `LC_RPATH` exists.
 
+- **Changing a Library's Install Name:** To change the canonical path by which other binaries refer to a library (essential when relocating or bundling libraries/frameworks), you modify the path string stored within the library's own `LC_ID_DYLIB` command. For instance, changing `/Users/dev/project/build/lib/libbar.dylib` to `@rpath/libbar.dylib`.
 
-1.  **Changing Dependencies:**
-    * **Goal:** Make a binary look for a library in a different location.
-    * **Action:** Modify the path string stored within an `LC_LOAD_DYLIB` (or `LC_LOAD_WEAK_DYLIB`) command.
-    * **Example:** Change `/usr/local/lib/libfoo.dylib` to `@rpath/libfoo.dylib`. This often requires ensuring an appropriate `LC_RPATH` exists (see below).
-2.  **Changing a Library's Install Name:**
-    * **Goal:** Change the canonical path by which other binaries refer to *this* library. Essential when relocating or bundling libraries/frameworks.
-    * **Action:** Modify the path string stored within the library's own `LC_ID_DYLIB` command.
-    * **Example:** Change `/Users/dev/project/build/lib/libbar.dylib` to `@rpath/libbar.dylib`.
-3.  **Adding or Modifying Runtime Search Paths (RPATH):**
-    * **Goal:** Tell `dyld` where to look when resolving `@rpath` dependencies.
-    * **Action:** Add a new `LC_RPATH` command or modify the path string within an existing one.
-    * **Example:** Add an `LC_RPATH` command with the path `@loader_path/../Frameworks` to make a binary look inside a sibling `Frameworks` directory for its `@rpath` dependencies.
+- **Adding or Modifying Runtime Search Paths (RPATH):** To tell `dyld` where to look when resolving `@rpath` dependencies, you add a new `LC_RPATH` command or modify the path string within an existing one. You might add an `LC_RPATH` command with the path `@loader_path/../Frameworks` to make a binary look inside a sibling `Frameworks` directory for its `@rpath` dependencies.
 
 **Challenges and Considerations:**
 
 * **Space Constraints:** The `mach_header` specifies the total size (`sizeofcmds`) allocated for all load commands. If you need to add a new command or make a path string significantly longer, there might not be enough space. Simple tools might fail. More sophisticated tools like `arwen` might attempt to use existing padding or might need to rewrite parts of the file, which is complex. Changing a path to another path of the *same or shorter length* is generally safest and easiest.
 * **Code Signing:** Modifying *any* part of a signed Mach-O binary (executable or library) **invalidates its code signature**. On modern macOS and iOS, unsigned or improperly signed code may fail to run due to security policies (Gatekeeper, System Integrity Protection). After patching a signed binary, you **must re-sign it** using the `codesign` command-line tool with an appropriate certificate for it to be runnable in many contexts.
-
-Understanding these structures, commands, path resolution rules, and the implications of patching (especially code signing) is vital for successfully using tools like `arwen` to manage Mach-O binaries.
