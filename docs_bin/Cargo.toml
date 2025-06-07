@@ -1,0 +1,21 @@
+[workspace]
+# We don't use any workspace settings at the moment,
+# but without it Cargo thinks this crate belongs to our top-level workspace
+
+[package]
+authors = ["nichmor"]
+description = "Binary that can generate documentation"
+edition = "2021"
+homepage = "https://github.com/nichmor/pixi"
+license = "BSD-3-Clause"
+name = "pixi_docs"
+readme = "README.md"
+repository = "https://github.com/nichmor/pixi"
+version = "0.1.0"
+
+
+[dependencies]
+clap = { version = "4.5.31", features = ["env"] }
+fs-err = "3.1.0"
+itertools = "0.14.0"
+arwen = { path = "../." }

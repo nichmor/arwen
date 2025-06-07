@@ -12,6 +12,7 @@ pub mod install_name;
 pub mod elf;
 
 #[derive(Parser, Debug)]
+/// The `arwen`
 pub enum Command {
     #[command(subcommand)]
     /// Mach-O commands
