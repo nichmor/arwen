@@ -50,15 +50,4 @@ For example, if `RPATH=/usr/local/special_libs`, it looks for `/usr/local/specia
 - `Loading`: This is the last part. Once `libdata.so.1` is found the dynamic linker maps its code and data segments into the memory space of the `my_app` process.
 
 
-**This is where patching becomes essential.** Tools like `arwen` allow you to modify the information embedded within the executable *after* it has been compiled and linked, telling the dynamic linker where to find the necessary libraries in the *actual* runtime environment.
-
-**Common Scenarios Requiring Patching:**
-
-Here are some frequent situations where you'll need to patch executables or libraries using a tool like `arwen`:
-
-- **Relocation / Non-Standard Installs:**
-    Software is installed in a non-standard location (e.g., `/opt/myapp`, `/home/user/bin`) instead of system paths like `/usr/bin`. Binaries might have been compiled assuming standard library locations.
-    Patch the binaries to add the application's own library directory (e.g., `/opt/myapp/lib`) to their runtime search path (`RPATH`/`RUNPATH` or Mach-O `LC_RPATH`).
-
-- **Cross-Compilation:**
-    When building software for a different architecture or operating system, the embedded paths might reflect the host system's layout, not the target's. Patch the resulting binaries to use paths appropriate for the target system.
+**This is where patching becomes essential.** Tools like `arwen` allow you to modify information within an executable *after* compilation, a crucial step for making applications **relocatable**. When software is installed in a non-standard directory (e.g., `/opt/myapp`), its binaries often fail because they were compiled to look for libraries only in standard system paths. `arwen` solves this by patching the binaries to add the application's own library directory (e.g., `/opt/myapp/lib`) to their runtime search path (`RPATH`/`RUNPATH` or Mach-O `LC_RPATH`), telling the dynamic linker where to find the necessary libraries in the actual runtime environment.
