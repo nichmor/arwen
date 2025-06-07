@@ -1,5 +1,5 @@
 site_name: "arwen - modern patching of binaries"
-# site_url: https://prefix-dev.github.io/pixi
+site_url: https://nichmor.github.io/arwen/
 
 theme:
   name: material
