@@ -1,0 +1,967 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../introduction/">
+      
+      
+        <link rel="next" href="../macho/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>ELF - arwen - modern patching of binaries</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Red+Hat+Text:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Red Hat Text";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#elf-executable-and-linkable-format" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="arwen - modern patching of binaries" class="md-header__button md-logo" aria-label="arwen - modern patching of binaries" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            arwen - modern patching of binaries
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ELF
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="prefix-light" data-md-color-accent="prefix-light"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="prefix" data-md-color-accent="prefix"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nichmor/arwen/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="arwen - modern patching of binaries" class="md-nav__button md-logo" aria-label="arwen - modern patching of binaries" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    arwen - modern patching of binaries
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nichmor/arwen/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why_patch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Why patching binaries?
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Patching
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Patching
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ELF
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    ELF
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#elf-executable-and-linkable-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      ELF (Executable and Linkable Format)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elf-file-structure-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      ELF File Structure Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ELF File Structure Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#more-detailed-view-of-the-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      More detailed view of the components
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dynamic-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dynamic Linking
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macho/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Macho
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patching_elf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Patching an ELF file
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patching_macho/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Patching an Macho file
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/arwen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#elf-executable-and-linkable-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      ELF (Executable and Linkable Format)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elf-file-structure-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      ELF File Structure Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ELF File Structure Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#more-detailed-view-of-the-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      More detailed view of the components
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dynamic-linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dynamic Linking
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/nichmor/arwen/edit/main/docs/patching/elf.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+  <h1>ELF</h1>
+
+<h2 id="elf-executable-and-linkable-format">ELF (Executable and Linkable Format)<a class="headerlink" href="#elf-executable-and-linkable-format" title="Permanent link">#</a></h2>
+<p><code>ELF</code> is the standard binary format used on Linux, BSD variants, Solaris, and many other Unix-like operating systems for <code>executables</code>, <code>shared libraries (.so files)</code>, <code>object code</code>, and <code>core dumps</code>.</p>
+<ul>
+<li><strong>Executables</strong>: These are files containing machine code instructions that the operating system can load directly into memory and run as a program. They are the result of compiling and linking source code. On Linux, common executables like <code>/bin/bash</code> or <code>/usr/bin/grep</code> are typically in ELF format.</li>
+</ul>
+<ul>
+<li><strong>Shared Libraries (.so files)</strong>: Standing for <code>"Shared Object"</code>, these files contain compiled code and data (functions, variables) designed to be used by multiple executable programs at the same time while they are running <code>(this is dynamic linking)</code>. Instead of each program having its own copy of the library code, they share a single copy loaded in memory. Examples include <code>libc.so.6</code> (the standard C library) or <code>libssl.so</code> (for SSL/TLS functions).</li>
+</ul>
+<ul>
+<li><strong>Object Code (.o files)</strong>: This is the intermediate output produced by a compiler when it translates source code (like <code>.c</code> or <code>.rs</code> files) into machine code for a specific architecture. Object files aren't runnable on their own. They contain the compiled code and data but also information needed by the linker to combine them with other object files and libraries to create a final executable or shared library.</li>
+</ul>
+<ul>
+<li><strong>Core Dumps</strong>: This is a file created by the operating system when a program crashes or terminates unexpectedly. It contains a snapshot of the program's state at the time of the crash, including its memory contents (the "core") and often CPU register values. Developers use core dump files with debuggers (like <code>gdb</code>) to perform post-mortem analysis and figure out why the program failed.</li>
+</ul>
+<h2 id="elf-file-structure-overview">ELF File Structure Overview<a class="headerlink" href="#elf-file-structure-overview" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>ELF Header</strong>: Always located at the very beginning of the file (offset 0).</li>
+</ul>
+<ul>
+<li><strong>Program Header Table (PHT)</strong>: Optional, but present in executables and shared libraries. Describes segments used for loading the file into memory. Its location and size are specified in the ELF Header.</li>
+</ul>
+<ul>
+<li><strong>Sections</strong>: Contain the actual code, data, symbol tables, string tables, and linking information. Their locations and sizes are described by the <code>Section Header Table</code>.</li>
+</ul>
+<ul>
+<li><strong>Section Header Table (SHT)</strong>: Present except sometimes in stripped executables. Describes the file's sections. Its location and size are specified in the ELF Header, often placed near the end of the file.</li>
+</ul>
+<p>A simple ELF file structure looks like this:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+---------------------+
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>| ELF Header          |  (File Offset 0)
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>+---------------------+
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>| Program Header Table|  (Offset specified in ELF Header)
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>| (Optional)          |
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>+---------------------+
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>|                     |
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>| Segment 1 / Section |  (e.g., Code .text)
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|                     |
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>+---------------------+
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|                     |
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>| Segment 2 / Section |  (e.g., Data .data, .bss)
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|                     |
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>+---------------------+
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>| ...                 |  (Other segments/sections like .dynamic)
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>+---------------------+
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>|                     |
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>| Section Header Table|  (Offset specified in ELF Header, often near end)
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>| (Optional)          |
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>+---------------------+
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Sections are often contained within Segments.</p>
+<p>The PHT describes the file from a loading/memory perspective (Segments), while the SHT describes it from a linking/content perspective (Sections).</p>
+</div>
+<h3 id="more-detailed-view-of-the-components">More detailed view of the components<a class="headerlink" href="#more-detailed-view-of-the-components" title="Permanent link">#</a></h3>
+<ul>
+<li><strong><code>1. ELF Header (Elf64_Ehdr / Elf32_Ehdr)</code></strong><ul>
+<li><strong>Location:</strong> Start of the file (offset 0).</li>
+<li><strong>Purpose:</strong> Identifies the file as ELF and provides essential metadata and pointers.</li>
+<li><strong>Key Fields:</strong><ul>
+<li><code>e_ident</code>: Magic number (<code>\x7fELF</code>) and other info (class 32/64-bit, data encoding, ABI version).</li>
+<li><code>e_type</code>: File type (e.g., <code>ET_EXEC</code> for executable, <code>ET_DYN</code> for shared library/position-independent executable, <code>ET_REL</code> for relocatable object file).</li>
+<li><code>e_machine</code>: Target architecture (e.g., <code>EM_X86_64</code>, <code>EM_AARCH64</code>).</li>
+<li><code>e_version</code>: ELF version (usually 1).</li>
+<li><code>e_entry</code>: Virtual memory address of the program's entry point (where execution begins).</li>
+<li><code>e_phoff</code>: File offset to the start of the Program Header Table.</li>
+<li><code>e_shoff</code>: File offset to the start of the Section Header Table.</li>
+<li><code>e_flags</code>: Processor-specific flags.</li>
+<li><code>e_ehsize</code>: Size of this ELF header.</li>
+<li><code>e_phentsize</code>: Size of a single entry in the Program Header Table.</li>
+<li><code>e_phnum</code>: Number of entries in the Program Header Table.</li>
+<li><code>e_shentsize</code>: Size of a single entry in the Section Header Table.</li>
+<li><code>e_shnum</code>: Number of entries in the Section Header Table.</li>
+<li><code>e_shstrndx</code>: Section header table index of the section containing section names.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>2. Program Header Table (PHT)</strong><ul>
+<li><strong>Location:</strong> At the file offset specified by <code>e_phoff</code> in the ELF Header. It's an array of <code>e_phnum</code> entries, each <code>e_phentsize</code> bytes long.</li>
+<li><strong>Purpose:</strong> Describes <em>segments</em> – contiguous chunks of the file that need to be mapped into memory by the system loader when creating a process image. This is the "execution view" of the file.</li>
+<li><strong><code>Key Entry Types (p_type):</code></strong><ul>
+<li><code>PT_LOAD</code>: Describes a loadable segment (e.g., code, data). Specifies file offset (<code>p_offset</code>), virtual address (<code>p_vaddr</code>), physical address (<code>p_paddr</code> - often ignored), file size (<code>p_filesz</code>), memory size (<code>p_memsz</code> - can be larger for <code>.bss</code>), and permissions (<code>p_flags</code> - Read/Write/Execute).</li>
+<li><code>PT_DYNAMIC</code>: Points to the segment containing dynamic linking information (the <code>.dynamic</code> section). Specifies offset (<code>p_offset</code>) and size (<code>p_filesz</code>). Essential for executables/libraries using dynamic linking.</li>
+<li><code>PT_INTERP</code>: Points to a null-terminated string specifying the path of the program interpreter (dynamic linker, e.g., <code>/lib64/ld-linux-x86-64.so.2</code>).</li>
+<li>Other types exist for notes (<code>PT_NOTE</code>), TLS (<code>PT_TLS</code>), etc.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>3. Sections</strong><ul>
+<li><strong>Location:</strong> Scattered throughout the file, as defined by the Section Header Table.</li>
+<li><strong>Purpose:</strong> Hold the actual content: compiled code, data, symbol tables, string tables, relocation information, dynamic linking structures, debugging info, etc. Sections represent the "linking view" of the file.</li>
+<li><strong>Common Sections:</strong></li>
+<li><code>.text</code>: Executable code.<ul>
+<li><code>.data</code>: Initialized data (global/static variables with initial values).</li>
+<li><code>.bss</code>: Uninitialized data (global/static variables without explicit initial values; occupies no file space but reserves memory space).</li>
+<li><code>.rodata</code>: Read-only data (constants, string literals).</li>
+<li><code>.symtab</code>: Symbol table (for linking/debugging).</li>
+<li><code>.strtab</code>: String table for <code>.symtab</code>.</li>
+<li><code>.shstrtab</code>: String table for section names themselves.</li>
+<li><code>.dynamic</code>: Holds the array of dynamic linking tags (see below).</li>
+<li><code>.dynsym</code>: Minimal symbol table needed for dynamic linking.</li>
+<li><code>.dynstr</code>: String table for <code>.dynsym</code> and <code>.dynamic</code> entries requiring strings (like library names in <code>DT_NEEDED</code>).</li>
+<li><code>.interp</code>: Contains the path string for the program interpreter (pointed to by <code>PT_INTERP</code>).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><strong>4. Section Header Table (SHT)</strong><ul>
+<li><strong>Location:</strong> At the file offset specified by <code>e_shoff</code> in the ELF Header. An array of <code>e_shnum</code> entries, each <code>e_shentsize</code> bytes long.</li>
+<li><strong>Purpose:</strong> Describes each section in the file. Essential for linkers and debuggers, less so for the runtime loader (which uses the PHT).</li>
+<li><strong><code>Key Fields in an Entry (Elf64_Shdr / Elf32_Shdr):</code></strong><ul>
+<li><code>sh_name</code>: Offset into the <code>.shstrtab</code> section giving the section's name.</li>
+<li><code>sh_type</code>: Section type (e.g., <code>SHT_PROGBITS</code> for code/data, <code>SHT_SYMTAB</code> for symbols, <code>SHT_STRTAB</code> for strings, <code>SHT_NOBITS</code> for <code>.bss</code>, <code>SHT_DYNAMIC</code> for dynamic tags).</li>
+<li><code>sh_flags</code>: Attributes like <code>SHF_WRITE</code>, <code>SHF_ALLOC</code> (occupies memory), <code>SHF_EXECINSTR</code> (executable code).</li>
+<li><code>sh_addr</code>: Virtual memory address if the section is loaded.</li>
+<li><code>sh_offset</code>: File offset of the section's start.</li>
+<li><code>sh_size</code>: Size of the section in the file.</li>
+<li><code>sh_link</code>, <code>sh_info</code>: Interpretation depends on section type (e.g., for <code>.dynamic</code>, <code>sh_link</code> points to the string table <code>.dynstr</code>).</li>
+<li><code>sh_addralign</code>: Required alignment.</li>
+<li><code>sh_entsize</code>: Size of entries if the section holds a table (like symbol table).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="dynamic-linking">Dynamic Linking<a class="headerlink" href="#dynamic-linking" title="Permanent link">#</a></h2>
+<p>For dynamic linking, the crucial parts are:</p>
+<ol>
+<li>The <code>PT_INTERP</code> program header entry (and the <code>.interp</code> section it points to) tells the kernel which dynamic linker to execute.</li>
+<li>The <code>PT_DYNAMIC</code> program header entry points to the segment containing the <code>.dynamic</code> section.</li>
+<li>The <strong><code>.dynamic</code></strong> section contains the array of tags and values that drive the dynamic linker. <code>arwen</code> modifies values associated with specific tags within this section (or the string table <code>.dynstr</code> they point to):
+    * <strong><code>DT_INTERP</code></strong>: (Tag only, value points into <code>.dynstr</code>) Path to the dynamic linker. Modifying the string in <code>.dynstr</code> changes the interpreter.
+    * <strong><code>DT_NEEDED</code></strong>: (Value points into <code>.dynstr</code>) Name of a required library. Modifying the string in <code>.dynstr</code> changes the dependency. <code>arwen</code> can also add/remove entries in the <code>.dynamic</code> array itself.
+    * <strong><code>DT_RPATH</code></strong> / <strong><code>DT_RUNPATH</code></strong>: (Value points into <code>.dynstr</code>) Library search paths. Modifying the string in <code>.dynstr</code> changes these paths. Remember <code>$ORIGIN</code> is expanded by the linker to the directory of the object being processed.</li>
+</ol>
+<p><strong>How the Dynamic Linker Uses This Information (Simplified version)</strong></p>
+<p>The dynamic linker (<code>ld-linux.so.2</code> or similar), specified by <code>PT_INTERP</code> / <code>DT_INTERP</code>, reads the <code>.dynamic</code> section (found via <code>PT_DYNAMIC</code>). It processes <code>DT_NEEDED</code> entries to find required libraries, searching in paths derived from <code>DT_RUNPATH</code>, <code>LD_LIBRARY_PATH</code>, <code>DT_RPATH</code>, and system defaults, then loads them into memory (using their own ELF structures) and resolves symbols.</p>
+<p>Understanding this workflow, helps understanding how <code>arwen</code> modifies an RPATH or a needed library. It's mostly targeting specific entries within the <code>.dynamic</code> section or the associated <code>.dynstr</code> string table within the ELF file layout.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../introduction/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Introduction">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Introduction
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../macho/" class="md-footer__link md-footer__link--next" aria-label="Next: Macho">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Macho
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.tabs.link", "content.code.copy", "content.action.edit", "content.code.annotate", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
