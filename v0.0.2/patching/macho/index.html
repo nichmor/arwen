@@ -488,9 +488,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-patching-works-with-arwen-conceptual" class="md-nav__link">
+  <a href="#how-patching-works-with-arwen" class="md-nav__link">
     <span class="md-ellipsis">
-      How Patching Works with arwen (Conceptual)
+      How Patching Works with arwen
     </span>
   </a>
   
@@ -698,9 +698,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-patching-works-with-arwen-conceptual" class="md-nav__link">
+  <a href="#how-patching-works-with-arwen" class="md-nav__link">
     <span class="md-ellipsis">
-      How Patching Works with arwen (Conceptual)
+      How Patching Works with arwen
     </span>
   </a>
   
@@ -799,33 +799,27 @@
     -  Standard system fallback locations (e.g., <code>/usr/local/lib</code>, <code>/usr/lib</code>).</li>
 </ul>
 <p>The <code>LC_RPATH</code> load command simply contains a path string to be added to this search list.</p>
-<h3 id="how-patching-works-with-arwen-conceptual">How Patching Works with <code>arwen</code> (Conceptual)<a class="headerlink" href="#how-patching-works-with-arwen-conceptual" title="Permanent link">#</a></h3>
+<h3 id="how-patching-works-with-arwen">How Patching Works with <code>arwen</code><a class="headerlink" href="#how-patching-works-with-arwen" title="Permanent link">#</a></h3>
 <p>Patching Mach-O files with a tool like <code>arwen</code> typically involves modifying the Load Commands or the data they reference (often strings within the commands themselves or in the <code>__LINKEDIT</code> segment).</p>
 <p>Some common patching operations include:</p>
 <ul>
 <li><strong>Modifying runtime dependencies</strong>.
 This involves adding <code>LC_RPATH</code> or removing them. For example, adding <code>LC_RPATH</code> command with the path <code>@loader_path/../Frameworks</code> to make a binary look inside a sibling <code>Frameworks</code> directory for its <code>@rpath</code> dependencies.</li>
 </ul>
-<ol>
-<li><strong>Changing Dependencies:</strong>
-    * <strong>Goal:</strong> Make a binary look for a library in a different location.
-    * <strong>Action:</strong> Modify the path string stored within an <code>LC_LOAD_DYLIB</code> (or <code>LC_LOAD_WEAK_DYLIB</code>) command.
-    * <strong>Example:</strong> Change <code>/usr/local/lib/libfoo.dylib</code> to <code>@rpath/libfoo.dylib</code>. This often requires ensuring an appropriate <code>LC_RPATH</code> exists (see below).</li>
-<li><strong>Changing a Library's Install Name:</strong>
-    * <strong>Goal:</strong> Change the canonical path by which other binaries refer to <em>this</em> library. Essential when relocating or bundling libraries/frameworks.
-    * <strong>Action:</strong> Modify the path string stored within the library's own <code>LC_ID_DYLIB</code> command.
-    * <strong>Example:</strong> Change <code>/Users/dev/project/build/lib/libbar.dylib</code> to <code>@rpath/libbar.dylib</code>.</li>
-<li><strong>Adding or Modifying Runtime Search Paths (RPATH):</strong>
-    * <strong>Goal:</strong> Tell <code>dyld</code> where to look when resolving <code>@rpath</code> dependencies.
-    * <strong>Action:</strong> Add a new <code>LC_RPATH</code> command or modify the path string within an existing one.
-    * <strong>Example:</strong> Add an <code>LC_RPATH</code> command with the path <code>@loader_path/../Frameworks</code> to make a binary look inside a sibling <code>Frameworks</code> directory for its <code>@rpath</code> dependencies.</li>
-</ol>
+<ul>
+<li><strong>Changing Dependencies:</strong> To make a binary look for a library in a different location, you modify the path string stored within an <code>LC_LOAD_DYLIB</code> or <code>LC_LOAD_WEAK_DYLIB</code> command. For example, changing <code>/usr/local/lib/libfoo.dylib</code> to <code>@rpath/libfoo.dylib</code> often requires ensuring an appropriate <code>LC_RPATH</code> exists.</li>
+</ul>
+<ul>
+<li><strong>Changing a Library's Install Name:</strong> To change the canonical path by which other binaries refer to a library (essential when relocating or bundling libraries/frameworks), you modify the path string stored within the library's own <code>LC_ID_DYLIB</code> command. For instance, changing <code>/Users/dev/project/build/lib/libbar.dylib</code> to <code>@rpath/libbar.dylib</code>.</li>
+</ul>
+<ul>
+<li><strong>Adding or Modifying Runtime Search Paths (RPATH):</strong> To tell <code>dyld</code> where to look when resolving <code>@rpath</code> dependencies, you add a new <code>LC_RPATH</code> command or modify the path string within an existing one. You might add an <code>LC_RPATH</code> command with the path <code>@loader_path/../Frameworks</code> to make a binary look inside a sibling <code>Frameworks</code> directory for its <code>@rpath</code> dependencies.</li>
+</ul>
 <p><strong>Challenges and Considerations:</strong></p>
 <ul>
 <li><strong>Space Constraints:</strong> The <code>mach_header</code> specifies the total size (<code>sizeofcmds</code>) allocated for all load commands. If you need to add a new command or make a path string significantly longer, there might not be enough space. Simple tools might fail. More sophisticated tools like <code>arwen</code> might attempt to use existing padding or might need to rewrite parts of the file, which is complex. Changing a path to another path of the <em>same or shorter length</em> is generally safest and easiest.</li>
 <li><strong>Code Signing:</strong> Modifying <em>any</em> part of a signed Mach-O binary (executable or library) <strong>invalidates its code signature</strong>. On modern macOS and iOS, unsigned or improperly signed code may fail to run due to security policies (Gatekeeper, System Integrity Protection). After patching a signed binary, you <strong>must re-sign it</strong> using the <code>codesign</code> command-line tool with an appropriate certificate for it to be runnable in many contexts.</li>
 </ul>
-<p>Understanding these structures, commands, path resolution rules, and the implications of patching (especially code signing) is vital for successfully using tools like <code>arwen</code> to manage Mach-O binaries.</p>
 
 
 

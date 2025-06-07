@@ -775,7 +775,7 @@
 </div>
 <h3 id="more-detailed-view-of-the-components">More detailed view of the components<a class="headerlink" href="#more-detailed-view-of-the-components" title="Permanent link">#</a></h3>
 <ul>
-<li><strong><code>1. ELF Header (Elf64_Ehdr / Elf32_Ehdr)</code></strong><ul>
+<li><strong>1. ELF Header (Elf64_Ehdr / Elf32_Ehdr)</strong><ul>
 <li><strong>Location:</strong> Start of the file (offset 0).</li>
 <li><strong>Purpose:</strong> Identifies the file as ELF and provides essential metadata and pointers.</li>
 <li><strong>Key Fields:</strong><ul>
@@ -862,9 +862,8 @@
     * <strong><code>DT_NEEDED</code></strong>: (Value points into <code>.dynstr</code>) Name of a required library. Modifying the string in <code>.dynstr</code> changes the dependency. <code>arwen</code> can also add/remove entries in the <code>.dynamic</code> array itself.
     * <strong><code>DT_RPATH</code></strong> / <strong><code>DT_RUNPATH</code></strong>: (Value points into <code>.dynstr</code>) Library search paths. Modifying the string in <code>.dynstr</code> changes these paths. Remember <code>$ORIGIN</code> is expanded by the linker to the directory of the object being processed.</li>
 </ol>
-<p><strong>How the Dynamic Linker Uses This Information (Simplified version)</strong></p>
+<p><strong>How the Dynamic Linker Uses This Information (A simplified overview)</strong></p>
 <p>The dynamic linker (<code>ld-linux.so.2</code> or similar), specified by <code>PT_INTERP</code> / <code>DT_INTERP</code>, reads the <code>.dynamic</code> section (found via <code>PT_DYNAMIC</code>). It processes <code>DT_NEEDED</code> entries to find required libraries, searching in paths derived from <code>DT_RUNPATH</code>, <code>LD_LIBRARY_PATH</code>, <code>DT_RPATH</code>, and system defaults, then loads them into memory (using their own ELF structures) and resolves symbols.</p>
-<p>Understanding this workflow, helps understanding how <code>arwen</code> modifies an RPATH or a needed library. It's mostly targeting specific entries within the <code>.dynamic</code> section or the associated <code>.dynstr</code> string table within the ELF file layout.</p>
 
 
 
