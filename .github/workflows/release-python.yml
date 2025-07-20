@@ -222,7 +222,8 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: '2_28'
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+          docker-options: ${{ matrix.platform.maturin_docker_options }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -285,7 +286,8 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+          docker-options: ${{ matrix.platform.maturin_docker_options }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -345,7 +347,8 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+          docker-options: ${{ matrix.platform.maturin_docker_options }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
 
       - name: "Build wheels (native-tls)"
         if: matrix.target != 'x86_64-unknown-linux-musl'
@@ -411,7 +414,8 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+          docker-options: ${{ matrix.platform.maturin_docker_options }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
