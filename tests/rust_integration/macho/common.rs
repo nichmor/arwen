@@ -4,7 +4,7 @@ pub fn run_command(cmd: &str, args: &[&str]) -> std::io::Result<Output> {
     let output = Command::new(cmd).args(args).output()?;
 
     if !output.status.success() {
-        eprintln!("Command {:?} failed", cmd);
+        eprintln!("Command {cmd:?} failed");
     }
     Ok(output)
 }

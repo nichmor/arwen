@@ -25,7 +25,7 @@ fn test_rpath_change(#[files("tests/data/macho/fat/exec/*")] bin_path: PathBuf) 
         let single_arch = arch.unwrap();
 
         let SingleArch::MachO(changed_macho) = single_arch else {
-            panic!("Expected MachO, got {:?}", single_arch);
+            panic!("Expected MachO, got {single_arch:?}");
         };
 
         // let changed_macho = MachO::parse(&arch.data, 0).unwrap();
@@ -52,7 +52,7 @@ fn test_rpath_remove(#[files("tests/data/macho/fat/exec/*")] bin_path: PathBuf) 
         let single_arch = arch.unwrap();
 
         let SingleArch::MachO(changed_macho) = single_arch else {
-            panic!("Expected MachO, got {:?}", single_arch);
+            panic!("Expected MachO, got {single_arch:?}");
         };
 
         // let changed_macho = MachO::parse(&arch.data, 0).unwrap();
@@ -82,7 +82,7 @@ fn test_rpath_add(#[files("tests/data/macho/fat/exec/*")] bin_path: PathBuf) {
         let single_arch = arch.unwrap();
 
         let SingleArch::MachO(changed_macho) = single_arch else {
-            panic!("Expected MachO, got {:?}", single_arch);
+            panic!("Expected MachO, got {single_arch:?}");
         };
 
         // let changed_macho = MachO::parse(&arch.data, 0).unwrap();
@@ -111,7 +111,7 @@ fn test_change_dylib_id(#[files("tests/data/macho/fat/libs/*")] lib_path: PathBu
         let single_arch = arch.unwrap();
 
         let SingleArch::MachO(changed_macho) = single_arch else {
-            panic!("Expected MachO, got {:?}", single_arch);
+            panic!("Expected MachO, got {single_arch:?}");
         };
 
         // let changed_macho = MachO::parse(&arch.data, 0).unwrap();
@@ -143,7 +143,7 @@ fn test_change_dylib_name(#[files("tests/data/macho/fat/exec/*")] bin_path: Path
         let single_arch = arch.unwrap();
 
         let SingleArch::MachO(changed_macho) = single_arch else {
-            panic!("Expected MachO, got {:?}", single_arch);
+            panic!("Expected MachO, got {single_arch:?}");
         };
 
         // let changed_macho = MachO::parse(&arch.data, 0).unwrap();

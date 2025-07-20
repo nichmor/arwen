@@ -496,7 +496,7 @@ impl<'data> Writer<'data> {
                         .iter()
                         .any(|prefix| dir.starts_with(prefix))
                 {
-                    eprintln!("Removing {} from RPATH due to non-allowed prefix", dir);
+                    eprintln!("Removing {dir} from RPATH due to non-allowed prefix");
                     return false;
                 }
 
@@ -518,11 +518,11 @@ impl<'data> Writer<'data> {
                         return true;
                     }
                 }
-                eprintln!("Removing directory {}", dir);
+                eprintln!("Removing directory {dir}");
                 false
             });
 
-            eprintln!("New rpath: {:?}", rpath_vec);
+            eprintln!("New rpath: {rpath_vec:?}");
 
             let new_rpath = rpath_vec.join(":");
             *val.to_mut() = ByteString::from(new_rpath.as_bytes()).to_vec();
