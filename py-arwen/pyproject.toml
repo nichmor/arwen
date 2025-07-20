@@ -11,5 +11,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+description = "A cross-platform, Mach-O and ELF utility to modify installs paths for dynamic libraries or executables."
+
 [tool.maturin]
 features = ["pyo3/extension-module"]

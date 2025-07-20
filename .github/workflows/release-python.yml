@@ -581,8 +581,8 @@ jobs:
         run: |
           pip install twine
           twine check wheels/*
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450  # v1.8.14
+      - name: Publish to PyPi
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # release/v1
         with:
           skip-existing: true
           packages-dir: wheels
