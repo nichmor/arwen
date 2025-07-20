@@ -118,7 +118,7 @@ jobs:
         with:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         shell: bash
         run: |
@@ -170,7 +170,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -222,7 +222,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: '2_28'
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -285,7 +285,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -460,7 +460,7 @@ jobs:
         with:
           working-directory: py-arwen
           target: x86_64
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -500,7 +500,7 @@ jobs:
       - name: "Build wheels - universal2"
         uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
-          args: --release --target universal2-apple-darwin --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --target universal2-apple-darwin --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
           working-directory: py-arwen
       - name: "Validate wheels with twine"
         run: |
