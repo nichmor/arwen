@@ -370,6 +370,8 @@ jobs:
           options: -v ${{ github.workspace }}:/io -w /io
           run: |
             apk add py3-pip
+            ls -la /io/py-arwen
+            ls -la /io/py-arwen/dist/
             pip3 install py-arwen --no-index --find-links /io/py-arwen/dist/ --force-reinstall --break-system-packages
             python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
