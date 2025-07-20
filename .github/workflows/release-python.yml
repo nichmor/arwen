@@ -228,7 +228,7 @@ jobs:
         run: |
           pip install twine
           twine check py-arwen/dist/*
-      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
+      - uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         if: matrix.platform.arch != 'ppc64'
         name: Test wheel
         with:
@@ -291,7 +291,7 @@ jobs:
         run: |
           pip install twine
           twine check py-arwen/dist/*
-      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
+      - uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         if: matrix.platform.arch != 'ppc64'
         name: Test wheel
         with:
@@ -416,7 +416,7 @@ jobs:
         run: |
           pip install twine
           twine check py-arwen/dist/*
-      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
+      - uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         name: Test wheel
         with:
           arch: ${{ matrix.platform.arch }}
