@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PACKAGE_NAME: py-arwen
+  PACKAGE_NAME: py_arwen
   PYTHON_VERSION: "3.11"
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
