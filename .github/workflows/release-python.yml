@@ -28,38 +28,67 @@ env:
   CARGO_NET_RETRY: 10
   CARGO_TERM_COLOR: always
   RUSTUP_MAX_RETRIES: 10
+  CARGO_BUILD_JOBS: 2
+
+permissions:
+  contents: read
 
 jobs:
   sdist:
     name: Build sdist
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
       - name: "Build sdist"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           command: sdist
           args: --out dist
+      - name: "Validate sdist with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test sdist"
         run: |
           rustup default "$(cat rust-toolchain)"
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.tar.gz --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload sdist"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: sdist
           path: py-arwen/dist
+          retention-days: 30
+      - name: Generate artifact hashes for SLSA
+        id: hash
+        if: inputs.tag
+        run: |
+          cd py-arwen/dist
+          echo "hashes=$(sha256sum * | base64 -w 0)" >> $GITHUB_OUTPUT
 
   windows:
     runs-on: windows-latest
     name: Build ${{ matrix.platform.target }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -73,19 +102,29 @@ jobs:
 #          - target: aarch64-pc-windows-msvc
 #            arch: x64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: ${{ matrix.platform.arch }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.platform.target }}
       - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
-          args: --release --out dist
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        shell: bash
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test wheel"
         if: ${{ !startsWith(matrix.platform.target, 'aarch64') }}
         shell: bash
@@ -93,14 +132,20 @@ jobs:
           python -m pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.whl --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: windows-wheels-${{ matrix.platform.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   linux:
     runs-on: ubuntu-latest
     name: Build ${{ matrix.target }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -108,34 +153,49 @@ jobs:
           - x86_64-unknown-linux-gnu
           - i686-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.target }}
       - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test wheel"
         if: ${{ startsWith(matrix.target, 'x86_64') }}
         run: |
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.whl --force-reinstall
           python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: linux-wheels-${{ matrix.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   linux-cross:
     runs-on: ubuntu-latest
     name: Build ${{ matrix.platform.target }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -146,20 +206,29 @@ jobs:
             arch: armv7
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.platform.target }}
       - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: '2_28'
-          args: --release --out dist
-      - uses: uraimo/run-on-arch-action@v2
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
+      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
         if: matrix.platform.arch != 'ppc64'
         name: Test wheel
         with:
@@ -174,14 +243,20 @@ jobs:
             pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links py-arwen/dist/ --force-reinstall
             python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: linux-wheels-${{ matrix.platform.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   linux-cross-native-tls:
     runs-on: ubuntu-latest
     name: Build ${{ matrix.platform.target }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -194,20 +269,29 @@ jobs:
             arch: ppc64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.platform.target }}
       - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          args: --release --out dist
-      - uses: uraimo/run-on-arch-action@v2
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
+      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
         if: matrix.platform.arch != 'ppc64'
         name: Test wheel
         with:
@@ -222,14 +306,20 @@ jobs:
             pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links py-arwen/dist/ --force-reinstall
             python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: linux-wheels-${{ matrix.platform.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   musllinux:
     runs-on: ubuntu-latest
     name: Build ${{ matrix.target }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -237,32 +327,41 @@ jobs:
           - x86_64-unknown-linux-musl
           - i686-unknown-linux-musl
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.target }}
       - name: "Build wheels (rustls-tls)"
         if: matrix.target == 'x86_64-unknown-linux-musl'
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Build wheels (native-tls)"
         if: matrix.target != 'x86_64-unknown-linux-musl'
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test wheel"
         if: matrix.target == 'x86_64-unknown-linux-musl'
-        uses: addnab/docker-run-action@v3
+        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185  # v3.0.0
         with:
           image: alpine:latest
           options: -v ${{ github.workspace }}:/io -w /io
@@ -271,14 +370,20 @@ jobs:
             pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links /io/py-arwen/dist/ --force-reinstall --break-system-packages
             python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: linux-wheels-${{ matrix.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   musllinux-cross:
     runs-on: ubuntu-latest
     name: Build ${{ matrix.platform.target }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -289,20 +394,29 @@ jobs:
             arch: armv7
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: ${{ matrix.platform.target }}
       - name: "Build wheels"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist
-      - uses: uraimo/run-on-arch-action@v2
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
+      - uses: uraimo/run-on-arch-action@5e842f3c23235e6b9e256dd748ea91a1c5f1bb36  # v2.7.1
         name: Test wheel
         with:
           arch: ${{ matrix.platform.arch }}
@@ -314,71 +428,105 @@ jobs:
             pip3 install ${{ env.PACKAGE_NAME }} --no-index --find-links py-arwen/dist/ --force-reinstall --break-system-packages
             python3 -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: linux-wheels-${{ matrix.platform.target }}
           path: py-arwen/dist
+          retention-days: 30
 
   macos-x86_64:
     runs-on: macos-13   # x86_64 runner
     name: Build x86_64-macos
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+        with:
+          workspaces: py-arwen
+          key: x86_64-apple-darwin
       - name: "Build wheels - x86_64"
-        uses: PyO3/maturin-action@v1
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
         with:
           working-directory: py-arwen
           target: x86_64
-          args: --release --out dist
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test wheel - x86_64"
         run: |
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.whl --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: macos-wheels-x86_64
           path: py-arwen/dist
+          retention-days: 30
 
   macos-universal:
     runs-on: macos-latest
     name: Build universal2-apple-macos
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # v5.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           architecture: x64
-      - name: "Build wheels - universal2"
-        uses: PyO3/maturin-action@v1
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
         with:
-          args: --release --target universal2-apple-darwin --out dist
+          workspaces: py-arwen
+          key: universal2-apple-darwin
+      - name: "Build wheels - universal2"
+        uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
+        with:
+          args: --release --target universal2-apple-darwin --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
           working-directory: py-arwen
+      - name: "Validate wheels with twine"
+        run: |
+          pip install twine
+          twine check py-arwen/dist/*
       - name: "Test wheel - universal2"
         run: |
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*universal2.whl --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload wheels"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
         with:
           name: macos-wheels-universal2
           path: py-arwen/dist
+          retention-days: 30
 
   validate-tag:
     name: Validate tag
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     # If you don't set an input tag, it's a dry run (no uploads).
     if: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: main # We checkout the main branch to check for the commit
       - name: Check main branch
@@ -407,6 +555,7 @@ jobs:
   upload-release:
     name: Upload to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs:
       - sdist
       - macos-universal
@@ -425,21 +574,47 @@ jobs:
     permissions:
       # For pypi trusted publishing
       id-token: write
+      # For artifact attestations
+      attestations: write
+      contents: read
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427  # v4.1.4
         with:
           merge-multiple: true
           path: wheels
-      - name: Publish to PyPi
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Generate artifact checksums
+        id: checksums
+        run: |
+          cd wheels
+          sha256sum * > SHA256SUMS
+          echo "checksums<<EOF" >> $GITHUB_OUTPUT
+          cat SHA256SUMS >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@5e9cb68e95676991667494a6a4e59b8a2f13e1d0  # v1.3.2
+        with:
+          subject-path: 'wheels/*'
+      - name: Final validation with twine
+        run: |
+          pip install twine
+          twine check wheels/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450  # v1.8.14
         with:
           skip-existing: true
           packages-dir: wheels
           verbose: true
+      - name: Upload checksums as artifact
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
+        with:
+          name: release-checksums
+          path: wheels/SHA256SUMS
+          retention-days: 90
 
   tag-release:
     name: Tag release
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: upload-release
     # If you don't set an input tag, it's a dry run (no uploads).
     if: ${{ inputs.tag }}
@@ -447,14 +622,15 @@ jobs:
       # For git tag
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608  # v4.1.2
         with:
           ref: ${{ inputs.sha }}
       - name: git tag
         run: |
-          git config user.email "hi@prefix.dev"
-          git config user.name "Prefix.dev Release CI"
+          git config user.email "nmorkotilo@gmail.com"
+          git config user.name "Arwen Release CI"
           git tag -m "py-arwen-v${{ inputs.tag }}" "py-arwen-v${{ inputs.tag }}"
+
           # If there is duplicate tag, this will fail. The publish to pypi action will have been a noop (due to skip
           # existing), so we make a non-destructive exit here
           git push --tags
