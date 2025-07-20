@@ -577,18 +577,6 @@ jobs:
         with:
           merge-multiple: true
           path: wheels
-      - name: Generate artifact checksums
-        id: checksums
-        run: |
-          cd wheels
-          sha256sum * > SHA256SUMS
-          echo "checksums<<EOF" >> $GITHUB_OUTPUT
-          cat SHA256SUMS >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@5e9cb68e95676991667494a6a4e59b8a2f13e1d0  # v1.3.2
-        with:
-          subject-path: 'wheels/*'
       - name: Final validation with twine
         run: |
           pip install twine
@@ -599,12 +587,6 @@ jobs:
           skip-existing: true
           packages-dir: wheels
           verbose: true
-      - name: Upload checksums as artifact
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3  # v4.3.1
-        with:
-          name: release-checksums
-          path: wheels/SHA256SUMS
-          retention-days: 90
 
   tag-release:
     name: Tag release
