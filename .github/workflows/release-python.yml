@@ -357,7 +357,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
