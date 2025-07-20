@@ -65,7 +65,6 @@ jobs:
           twine check py-arwen/dist/*
       - name: "Test sdist"
         run: |
-          rustup default "$(cat rust-toolchain)"
           pip install py-arwen/dist/${{ env.PACKAGE_NAME }}-*.tar.gz --force-reinstall
           python -c "import arwen; print(arwen.__version__)"
       - name: "Upload sdist"
@@ -346,7 +345,8 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
+
       - name: "Build wheels (native-tls)"
         if: matrix.target != 'x86_64-unknown-linux-musl'
         uses: PyO3/maturin-action@2c5c1560848aaa364c3545136054932db5fa27b7  # v1.44.0
@@ -354,7 +354,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
@@ -411,7 +411,7 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
+          args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
       - name: "Validate wheels with twine"
         run: |
           pip install twine
