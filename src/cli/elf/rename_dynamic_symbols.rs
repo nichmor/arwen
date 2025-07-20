@@ -6,7 +6,7 @@ use clap::Parser;
 fn parse_key_val(s: &str) -> Result<(String, String), Box<dyn Error + Send + Sync + 'static>> {
     let pos = s
         .find('=')
-        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
     let key = s[..pos].to_string();
     let value = s[pos + 1..].to_string();
     Ok((key, value))
