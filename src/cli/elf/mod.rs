@@ -22,6 +22,7 @@ pub mod replace_needed;
 pub mod set_execstack;
 pub mod set_interpreter;
 pub mod set_os_abi;
+pub mod set_page_size;
 pub mod set_rpath;
 pub mod set_soname;
 pub mod shrink_rpath;
@@ -51,5 +52,6 @@ pub fn execute(elf: ElfCommand) -> Result<(), ElfError> {
         ElfCommand::ClearExecStack(args) => clear_execstack::execute(args),
         ElfCommand::SetExecStack(args) => set_execstack::execute(args),
         ElfCommand::PrintExecStack(args) => print_execstack::execute(args),
+        ElfCommand::SetPageSize(args) => set_page_size::execute(args),
     }
 }

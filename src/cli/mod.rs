@@ -68,6 +68,7 @@ pub enum ElfCommand {
     ClearExecStack(elf::clear_execstack::Args),
     SetExecStack(elf::set_execstack::Args),
     PrintExecStack(elf::print_execstack::Args),
+    SetPageSize(elf::set_page_size::Args),
 }
 
 #[derive(Parser, Debug)]

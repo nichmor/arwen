@@ -23,6 +23,7 @@ use super::{elf::move_sections, BuilderExt, ElfError, Result};
 pub struct Writer<'data> {
     pub(crate) builder: build::elf::Builder<'data>,
     pub(crate) modified: bool,
+    pub(crate) page_size: Option<u32>,
 }
 
 impl<'data> Writer<'data> {
@@ -32,6 +33,7 @@ impl<'data> Writer<'data> {
         Ok(Self {
             builder,
             modified: false,
+            page_size: None,
         })
     }
 
@@ -689,5 +691,52 @@ impl<'data> Writer<'data> {
     /// The `names` map is from old names to new names.
     pub fn rename_sections(&mut self, names: &HashMap<Vec<u8>, Vec<u8>>) {
         self.elf_rename_sections(names);
+    }
+
+    /// Set the page size for ELF file segment alignment.
+    pub fn elf_set_page_size(&mut self, page_size: u32) -> Result<()> {
+        // Validate page size (must be power of 2 and >= 1024)
+        if !page_size.is_power_of_two() || page_size < 1024 {
+            return Err(ElfError::Modify(format!(
+                "Page size must be a power of 2 and >= 1024, got {page_size}",
+            )));
+        }
+
+        self.page_size = Some(page_size);
+        self.modified = true;
+
+        // Update program header alignments
+        for segment in &mut self.builder.segments {
+            if segment.p_type == elf::PT_LOAD {
+                segment.p_align = page_size as u64;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Get the current page size used for segment alignment.
+    pub fn elf_get_page_size(&self) -> u32 {
+        if let Some(page_size) = self.page_size {
+            return page_size;
+        }
+
+        // Return default page size based on architecture
+        // Inspired from https://github.com/NixOS/patchelf/blob/master/src/patchelf.cc#L369
+        match self.builder.header.e_machine {
+            // 65536
+            elf::EM_ALPHA
+            | elf::EM_IA_64
+            | elf::EM_MIPS
+            | elf::EM_PPC
+            | elf::EM_PPC64
+            | elf::EM_AARCH64
+            | elf::EM_TILEGX
+            | elf::EM_LOONGARCH => 0x10000,
+            // 8192
+            elf::EM_SPARC | elf::EM_SPARCV9 => 0x2000,
+            // 4096 (default)
+            _ => 0x1000,
+        }
     }
 }
