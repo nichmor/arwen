@@ -281,3 +281,54 @@ fn test_clear_execstack(#[files("tests/data/elf/x64/exec/*")] bin_path: PathBuf)
     insta::assert_debug_snapshot!(changed_elf.program_headers);
     insta::assert_snapshot!(changed_elf_data.len());
 }
+
+/// This test verifies that page size can be set for ELF files
+#[rstest]
+fn test_set_page_size(#[files("tests/data/elf/x64/exec/*")] bin_path: PathBuf) {
+    let data_bytes = std::fs::read(&bin_path).unwrap();
+
+    let mut elf_container = ElfContainer::parse(&data_bytes).unwrap();
+
+    // Test getting default page size first
+    let default_page_size = elf_container.get_page_size();
+    assert!(default_page_size > 0);
+
+    // Set a custom page size (8KB)
+    elf_container.set_page_size(8192).unwrap();
+
+    // Verify the page size was set correctly
+    assert_eq!(elf_container.get_page_size(), 8192);
+
+    let mut changed_elf_data = Vec::new();
+    elf_container.write(&mut changed_elf_data).unwrap();
+
+    let changed_elf = Elf::parse(&changed_elf_data).unwrap();
+
+    // Verify PT_LOAD segments have correct alignment
+    for ph in &changed_elf.program_headers {
+        if ph.p_type == goblin::elf::program_header::PT_LOAD {
+            assert_eq!(ph.p_align, 8192);
+        }
+    }
+
+    insta::assert_debug_snapshot!(changed_elf.program_headers);
+    insta::assert_snapshot!(changed_elf_data.len());
+}
+
+/// This test verifies that invalid page sizes are rejected
+#[rstest]
+fn test_set_page_size_validation(#[files("tests/data/elf/x64/exec/*")] bin_path: PathBuf) {
+    let data_bytes = std::fs::read(&bin_path).unwrap();
+
+    let mut elf_container = ElfContainer::parse(&data_bytes).unwrap();
+
+    // Test invalid page sizes
+    assert!(elf_container.set_page_size(1023).is_err()); // Too small
+    assert!(elf_container.set_page_size(1025).is_err()); // Not power of 2
+    assert!(elf_container.set_page_size(0).is_err()); // Zero
+
+    // Test valid page sizes
+    assert!(elf_container.set_page_size(1024).is_ok()); // Minimum valid
+    assert!(elf_container.set_page_size(4096).is_ok()); // Standard
+    assert!(elf_container.set_page_size(65536).is_ok()); // Large
+}

@@ -207,6 +207,17 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
+    /// Set the page size for ELF file segment alignment.
+    pub fn set_page_size(&mut self, page_size: u32) -> Result<(), ElfError> {
+        self.inner.elf_set_page_size(page_size)?;
+        Ok(())
+    }
+
+    /// Get the current page size used for segment alignment.
+    pub fn get_page_size(&self) -> u32 {
+        self.inner.elf_get_page_size()
+    }
+
     pub fn write_to_path(&mut self, path: &Path) -> Result<(), ElfError> {
         self.inner.write_to_path(path)?;
         Ok(())
