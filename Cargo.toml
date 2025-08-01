@@ -13,7 +13,7 @@ categories = ["parsing", "development-tools::debugging"]
 
 [package]
 authors.workspace = true
-description = "A cross-platform, Mach-O and ELF utility to modify installs paths for dynamic libraries or executables."
+description = "A cross-platform binary patching tool for Mach-O and ELF."
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
