@@ -41,7 +41,7 @@ object.workspace = true
 [dev-dependencies]
 insta = "1.42.0"
 tempfile = "3.16.0"
-rstest = "0.25.0"
+rstest = "0.26.0"
 
 
 # [patch.crates-io]
