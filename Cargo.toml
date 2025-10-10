@@ -21,6 +21,7 @@ name = "arwen"
 readme.workspace = true
 repository.workspace = true
 version = "0.0.2"
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
 goblin = { version = "0.9.3", features = ["mach64"] }
