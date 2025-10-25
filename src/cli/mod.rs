@@ -89,9 +89,9 @@ pub fn execute() -> Result<(), ArwenError> {
 
 #[derive(Debug, Error)]
 pub enum ArwenError {
-    #[error("error while patching Mach-O file")]
+    #[error("error while patching Mach-O file: \n{0}")]
     Macho(#[from] crate::macho::MachoError),
 
-    #[error("error while patching ELF file")]
+    #[error("error while patching ELF file: \n{0}")]
     Elf(#[from] crate::elf::ElfError),
 }
