@@ -28,9 +28,9 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Add a runpath to the ELF file.
-    pub fn add_runpath(&mut self, new_runpath: &str) -> Result<(), ElfError> {
-        let run_path = new_runpath.as_bytes().to_vec();
-        self.inner.elf_add_runpath(&[run_path])?;
+    pub fn add_runpath(&mut self, new_runpath: impl AsRef<[u8]>) -> Result<(), ElfError> {
+        self.inner
+            .elf_add_runpath(&[new_runpath.as_ref().to_vec()])?;
 
         Ok(())
     }
@@ -43,9 +43,8 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Set runpath to the ELF file.
-    pub fn set_runpath(&mut self, set_runpath: &str) -> Result<(), ElfError> {
-        let run_path = set_runpath.as_bytes().to_vec();
-        self.inner.elf_set_runpath(run_path)?;
+    pub fn set_runpath(&mut self, set_runpath: impl AsRef<[u8]>) -> Result<(), ElfError> {
+        self.inner.elf_set_runpath(set_runpath.as_ref().to_vec())?;
 
         Ok(())
     }
@@ -92,8 +91,8 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Set the SONAME of DT_SONAME.
-    pub fn set_soname(&mut self, soname: &str) -> Result<(), ElfError> {
-        self.inner.elf_set_soname(soname.as_bytes().to_vec())?;
+    pub fn set_soname(&mut self, soname: impl AsRef<[u8]>) -> Result<(), ElfError> {
+        self.inner.elf_set_soname(soname.as_ref().to_vec())?;
 
         Ok(())
     }
@@ -113,10 +112,10 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Add DT_NEEDED to the ELF file.
-    pub fn add_needed(&mut self, dt_needed: Vec<String>) -> Result<(), ElfError> {
+    pub fn add_needed(&mut self, dt_needed: Vec<impl Into<Vec<u8>>>) -> Result<(), ElfError> {
         let dt_as_u8 = dt_needed
-            .iter()
-            .map(|x| x.as_bytes().to_vec())
+            .into_iter()
+            .map(Into::into)
             .collect::<Vec<Vec<u8>>>();
         self.inner.elf_add_needed(&dt_as_u8)?;
 
@@ -124,10 +123,10 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Remove DT_NEEDED from the ELF file.
-    pub fn remove_needed(&mut self, dt_needed: Vec<String>) -> Result<(), ElfError> {
+    pub fn remove_needed(&mut self, dt_needed: Vec<impl Into<Vec<u8>>>) -> Result<(), ElfError> {
         let dt_as_u8 = dt_needed
-            .iter()
-            .map(|x| x.as_bytes().to_vec())
+            .into_iter()
+            .map(Into::into)
             .collect::<HashSet<Vec<u8>>>();
         self.inner.elf_delete_needed(&dt_as_u8)?;
 
@@ -135,7 +134,10 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Replace DT_NEEDED in the ELF file.
-    pub fn replace_needed(&mut self, dt_needed: &HashMap<String, String>) -> Result<(), ElfError> {
+    pub fn replace_needed(
+        &mut self,
+        dt_needed: &HashMap<impl Into<Vec<u8>> + Clone, impl Into<Vec<u8>> + Clone>,
+    ) -> Result<(), ElfError> {
         let dt_as_u8 = transform_map(dt_needed);
         self.inner.elf_replace_needed(&dt_as_u8)?;
 
@@ -198,7 +200,7 @@ impl<'a> ElfContainer<'a> {
     /// Rename dynamic symbols in the ELF file.
     pub fn rename_dynamic_symbols(
         &mut self,
-        symbols: &HashMap<String, String>,
+        symbols: &HashMap<impl Into<Vec<u8>> + Clone, impl Into<Vec<u8>> + Clone>,
     ) -> Result<(), ElfError> {
         let symbols = transform_map(symbols);
 
@@ -229,8 +231,10 @@ impl<'a> ElfContainer<'a> {
     }
 }
 
-fn transform_map(map: &HashMap<String, String>) -> HashMap<Vec<u8>, Vec<u8>> {
+fn transform_map(
+    map: &HashMap<impl Into<Vec<u8>> + Clone, impl Into<Vec<u8>> + Clone>,
+) -> HashMap<Vec<u8>, Vec<u8>> {
     map.iter()
-        .map(|(k, v)| (k.as_bytes().to_vec(), v.as_bytes().to_vec()))
+        .map(|(k, v)| (k.clone().into(), v.clone().into()))
         .collect()
 }

@@ -20,7 +20,7 @@ license.workspace = true
 name = "arwen"
 readme.workspace = true
 repository.workspace = true
-version = "0.0.2"
+version = "0.0.3"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
@@ -36,7 +36,7 @@ clap = { workspace = true }
 scroll = { workspace = true }
 thiserror = { workspace = true }
 goblin = { workspace = true }
-object.workspace = true
+object = { workspace = true }
 
 
 [dev-dependencies]
