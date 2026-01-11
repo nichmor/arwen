@@ -24,10 +24,10 @@ version = "0.0.3"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
-goblin = { version = "0.9.3", features = ["mach64"] }
-object = { version = "0.36.7", features = ["write", "build"] }
+goblin = { version = "0.10.4", features = ["mach64"] }
+object = { version = "0.38.1", features = ["write", "build"] }
 clap = { version = "4.5.26", features = ["derive"] }
-scroll = "0.12.0"
+scroll = "0.13.0"
 thiserror = "2.0.11"
 
 
