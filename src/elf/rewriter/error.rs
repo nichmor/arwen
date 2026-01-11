@@ -1,5 +1,6 @@
 use object::build;
 use std::io;
+use std::string::FromUtf8Error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -17,6 +18,9 @@ pub enum ElfError {
     #[error("A validation error occurred while modifying the file")]
     /// An error occurred while modifying the file.
     Modify(String),
+    #[error("Non-UTF-8 DT_NEEDED entry")]
+    /// The `DT_NEEDED` entry is not UTF-8 encoded
+    InvalidDtNeededEncoding(#[source] FromUtf8Error),
 }
 
 /// The  `Result` type for this library.
