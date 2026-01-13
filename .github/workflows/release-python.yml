@@ -78,7 +78,7 @@ jobs:
         if: inputs.tag
         run: |
           cd py-arwen/dist
-          echo "hashes=$(sha256sum * | base64 -w 0)" >> $GITHUB_OUTPUT
+          echo "hashes=$(sha256sum ./* | base64 -w 0)" >> $GITHUB_OUTPUT
 
   windows:
     runs-on: windows-latest
@@ -222,7 +222,6 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: '2_28'
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
@@ -286,7 +285,6 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.platform.target }}
           manylinux: auto
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }}
       - name: "Validate wheels with twine"
         run: |
@@ -347,7 +345,6 @@ jobs:
           working-directory: py-arwen
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
           args: --release --out dist --jobs ${{ env.CARGO_BUILD_JOBS }} --interpreter python${{ env.PYTHON_VERSION }}
 
       - name: "Build wheels (native-tls)"
@@ -411,7 +408,6 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
           args: --release --out dist --no-default-features
-          docker-options: ${{ matrix.platform.maturin_docker_options }}
       - uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         name: Test wheel
         with:
