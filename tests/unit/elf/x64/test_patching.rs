@@ -332,3 +332,21 @@ fn test_set_page_size_validation(#[files("tests/data/elf/x64/exec/*")] bin_path:
     assert!(elf_container.set_page_size(4096).is_ok()); // Standard
     assert!(elf_container.set_page_size(65536).is_ok()); // Large
 }
+
+/// This test verifies that shrink_rpath doesn't panic on invalid UTF-8 in DT_NEEDED.
+#[rstest]
+fn test_shrink_rpath_invalid_utf8_in_needed(
+    #[files("tests/data/elf/x64/exec/*")] bin_path: PathBuf,
+) {
+    let data_bytes = std::fs::read(&bin_path).unwrap();
+    let mut elf_container = ElfContainer::parse(&data_bytes).unwrap();
+
+    // Set an absolute runpath so shrink_rpath will check directories
+    elf_container.set_runpath("/tmp/nonexistent").unwrap();
+
+    // DT_NEEDED entry with invalid UTF-8 bytes
+    let invalid_utf8: Vec<u8> = vec![b'l', b'i', b'b', 0xFF, 0xFE, b'.', b's', b'o'];
+    elf_container.inner.elf_add_needed(&[invalid_utf8]).unwrap();
+
+    elf_container.shrink_rpath(vec![]).unwrap();
+}

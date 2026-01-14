@@ -503,7 +503,9 @@ impl<'data> Writer<'data> {
                 }
 
                 for lib_needed in needed_libraries.iter() {
-                    let possible_library = String::from_utf8(lib_needed.to_vec()).unwrap();
+                    let Ok(possible_library) = String::from_utf8(lib_needed.to_vec()) else {
+                        continue;
+                    };
 
                     let library_location = dir_path.join(possible_library);
                     // read the elf file
@@ -511,9 +513,11 @@ impl<'data> Writer<'data> {
                     let Ok(file_content) = file_content else {
                         continue;
                     };
-                    let elf_file =
+                    let Ok(elf_file) =
                         elf::FileHeader64::<object::Endianness>::parse(file_content.as_slice())
-                            .unwrap();
+                    else {
+                        continue;
+                    };
                     let lib_e_machine = elf_file.e_machine(endian);
 
                     if lib_e_machine == e_machine {
