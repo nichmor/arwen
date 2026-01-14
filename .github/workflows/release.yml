@@ -28,6 +28,9 @@ jobs:
       - name: Run tests
         run: pixi run test-py
 
+      - name: Clean up test artifacts
+        run: rm -rf .pixi .pytest_cache
+
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
