@@ -3,6 +3,7 @@
 .test-projects
 __pycache__
 .pixi
+.pytest_cache
 .build
 .DS_store
 site/
