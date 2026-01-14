@@ -71,10 +71,43 @@ dependencies = [
 name = "arwen"
 version = "0.0.3"
 dependencies = [
+ "arwen-core",
+ "arwen-elf",
+ "arwen-macho",
  "clap",
+ "insta",
+ "rstest",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "arwen-core"
+version = "0.0.3"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "arwen-elf"
+version = "0.0.3"
+dependencies = [
+ "arwen-core",
  "goblin",
  "insta",
  "object",
+ "rstest",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "arwen-macho"
+version = "0.0.3"
+dependencies = [
+ "arwen-core",
+ "goblin",
+ "insta",
  "rstest",
  "scroll",
  "tempfile",

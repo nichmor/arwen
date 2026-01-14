@@ -1,0 +1,6 @@
+---
+source: crates/arwen-elf/tests/elf_tests.rs
+assertion_line: 40
+expression: changed_elf.runpaths
+---
+[]

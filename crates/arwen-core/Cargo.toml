@@ -1,0 +1,12 @@
+[package]
+name = "arwen-core"
+version = "0.0.3"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core types and traits for arwen binary patching tools"
+
+[dependencies]
+thiserror = { workspace = true }
