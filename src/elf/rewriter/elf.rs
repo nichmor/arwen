@@ -1,3 +1,7 @@
+// This file contains code derived from the `object-rewrite` crate.
+// See THIRD-PARTY-LICENSES for license information.
+// Source: https://github.com/gimli-rs/object/tree/master/crates/rewrite
+
 use object::{
     build::{self},
     elf,
