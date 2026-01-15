@@ -1,4 +1,4 @@
-use arwen::elf::ElfContainer;
+use arwen_elf::ElfContainer;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use std::collections::HashMap;

@@ -1,5 +1,0 @@
----
-source: tests/unit/elf/x32/test_patching.rs
-expression: macho_container.data.len()
----
-827540

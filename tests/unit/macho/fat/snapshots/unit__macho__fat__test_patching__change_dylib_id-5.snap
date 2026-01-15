@@ -1,5 +1,0 @@
----
-source: tests/unit/macho/fat/test_patching.rs
-expression: macho_container.data.len()
----
-98891

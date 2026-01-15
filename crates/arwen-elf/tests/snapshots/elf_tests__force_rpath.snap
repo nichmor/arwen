@@ -1,0 +1,7 @@
+---
+source: crates/arwen-elf/tests/elf_tests.rs
+expression: changed_macho.rpaths
+---
+[
+    "path-graf",
+]

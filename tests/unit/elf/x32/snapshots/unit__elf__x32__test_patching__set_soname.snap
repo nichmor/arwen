@@ -1,7 +1,0 @@
----
-source: tests/unit/elf/x32/test_patching.rs
-expression: changed_macho.soname
----
-Some(
-    "my_soname",
-)

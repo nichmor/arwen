@@ -1,5 +1,5 @@
-use arwen::elf;
-use arwen::macho;
+use arwen_elf as elf;
+use arwen_macho as macho;
 use pyo3::{create_exception, exceptions::PyException, PyErr};
 use std::error::Error;
 
