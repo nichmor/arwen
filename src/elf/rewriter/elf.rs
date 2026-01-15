@@ -228,7 +228,9 @@ pub(crate) fn find_move_sections(
         if !section.is_alloc() {
             continue;
         }
-        if section.sh_offset == 0 {
+        // Note that it is allowed for SHT_NOBITS sections to have sh_offset == 0,
+        // but we never move them, so we must be careful to skip them here.
+        if section.sh_offset == 0 && section.sh_type != elf::SHT_NOBITS {
             // Newly added section that needs to be assigned to a segment,
             // or a section that has already been flagged for moving.
             move_sections.push(section.id());
