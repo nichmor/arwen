@@ -1,6 +1,5 @@
 ---
 source: crates/arwen-macho/tests/macho_tests.rs
-assertion_line: 65
 expression: changed_macho
 ---
 MachO {

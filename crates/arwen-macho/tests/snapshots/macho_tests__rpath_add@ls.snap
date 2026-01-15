@@ -1,6 +1,5 @@
 ---
 source: crates/arwen-macho/tests/macho_tests.rs
-assertion_line: 46
 expression: changed_macho
 ---
 MachO {
@@ -9,8 +8,8 @@ MachO {
         cputype: 16777223,
         cpusubtype: 0x3,
         filetype: "EXECUTE",
-        ncmds: 16,
-        sizeofcmds: 2008,
+        ncmds: 18,
+        sizeofcmds: 2096,
         flags: 0x200085,
         reserved: 0x0,
     },
@@ -409,6 +408,26 @@ MachO {
                     cmdsize: 16,
                     dataoff: 34128,
                     datasize: 18912,
+                },
+            ),
+        },
+        LoadCommand {
+            offset: 2040,
+            command: Rpath(
+                RpathCommand {
+                    cmd: 2147483676,
+                    cmdsize: 24,
+                    path: 12,
+                },
+            ),
+        },
+        LoadCommand {
+            offset: 2064,
+            command: Rpath(
+                RpathCommand {
+                    cmd: 2147483676,
+                    cmdsize: 64,
+                    path: 12,
                 },
             ),
         },

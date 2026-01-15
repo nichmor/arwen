@@ -1,6 +1,5 @@
 ---
 source: crates/arwen-elf/tests/elf_tests.rs
-assertion_line: 111
 expression: changed_elf.program_headers
 ---
 [

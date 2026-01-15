@@ -1,6 +1,5 @@
 ---
 source: crates/arwen-macho/tests/macho_tests.rs
-assertion_line: 29
 expression: changed_macho
 ---
 MachO {
@@ -10,7 +9,7 @@ MachO {
         cpusubtype: 0x3,
         filetype: "EXECUTE",
         ncmds: 17,
-        sizeofcmds: 2064,
+        sizeofcmds: 2048,
         flags: 0x200085,
         reserved: 0x0,
     },
@@ -380,7 +379,7 @@ MachO {
             command: LoadDylib(
                 DylibCommand {
                     cmd: 12,
-                    cmdsize: 56,
+                    cmdsize: 72,
                     dylib: Dylib {
                         name: 24,
                         timestamp: 2,
@@ -391,7 +390,7 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 2008,
+            offset: 2024,
             command: FunctionStarts(
                 LinkeditDataCommand {
                     cmd: 38,
@@ -402,7 +401,7 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 2024,
+            offset: 2040,
             command: CodeSignature(
                 LinkeditDataCommand {
                     cmd: 29,
@@ -413,11 +412,11 @@ MachO {
             ),
         },
         LoadCommand {
-            offset: 2040,
+            offset: 2056,
             command: Rpath(
                 RpathCommand {
                     cmd: 2147483676,
-                    cmdsize: 56,
+                    cmdsize: 24,
                     path: 12,
                 },
             ),
@@ -657,7 +656,7 @@ MachO {
         "self",
         "/usr/lib/libncurses.5.4.dylib",
         "/usr/lib/libutil.dylib",
-        "/usr/lib/libSystem.B.dylib",
+        "very_very_very_very_very_very_very_longid",
     ],
     name: None,
     little_endian: true,
@@ -1665,7 +1664,7 @@ MachO {
         [
             Import {
                 name: "__DefaultRuneLocale",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24616,
                 size: 0,
@@ -1676,7 +1675,7 @@ MachO {
             },
             Import {
                 name: "___stack_chk_guard",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24624,
                 size: 0,
@@ -1687,7 +1686,7 @@ MachO {
             },
             Import {
                 name: "___stderrp",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24632,
                 size: 0,
@@ -1698,7 +1697,7 @@ MachO {
             },
             Import {
                 name: "___stdoutp",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24640,
                 size: 0,
@@ -1709,7 +1708,7 @@ MachO {
             },
             Import {
                 name: "_optind",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24648,
                 size: 0,
@@ -1720,7 +1719,7 @@ MachO {
             },
             Import {
                 name: "dyld_stub_binder",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: false,
                 offset: 24656,
                 size: 0,
@@ -1731,7 +1730,7 @@ MachO {
             },
             Import {
                 name: "___error",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24672,
                 size: 8,
@@ -1742,7 +1741,7 @@ MachO {
             },
             Import {
                 name: "___maskrune",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24680,
                 size: 8,
@@ -1753,7 +1752,7 @@ MachO {
             },
             Import {
                 name: "___snprintf_chk",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24688,
                 size: 8,
@@ -1764,7 +1763,7 @@ MachO {
             },
             Import {
                 name: "___stack_chk_fail",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24696,
                 size: 8,
@@ -1775,7 +1774,7 @@ MachO {
             },
             Import {
                 name: "___tolower",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24704,
                 size: 8,
@@ -1786,7 +1785,7 @@ MachO {
             },
             Import {
                 name: "_acl_free",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24712,
                 size: 8,
@@ -1797,7 +1796,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_entry",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24720,
                 size: 8,
@@ -1808,7 +1807,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_flag_np",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24728,
                 size: 8,
@@ -1819,7 +1818,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_flagset_np",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24736,
                 size: 8,
@@ -1830,7 +1829,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_link_np",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24744,
                 size: 8,
@@ -1841,7 +1840,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_perm_np",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24752,
                 size: 8,
@@ -1852,7 +1851,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_permset",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24760,
                 size: 8,
@@ -1863,7 +1862,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_qualifier",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24768,
                 size: 8,
@@ -1874,7 +1873,7 @@ MachO {
             },
             Import {
                 name: "_acl_get_tag_type",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24776,
                 size: 8,
@@ -1885,7 +1884,7 @@ MachO {
             },
             Import {
                 name: "_atoi",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24784,
                 size: 8,
@@ -1896,7 +1895,7 @@ MachO {
             },
             Import {
                 name: "_compat_mode",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24792,
                 size: 8,
@@ -1907,7 +1906,7 @@ MachO {
             },
             Import {
                 name: "_err",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24800,
                 size: 8,
@@ -1918,7 +1917,7 @@ MachO {
             },
             Import {
                 name: "_exit",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24808,
                 size: 8,
@@ -1929,7 +1928,7 @@ MachO {
             },
             Import {
                 name: "_fflagstostr",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24816,
                 size: 8,
@@ -1940,7 +1939,7 @@ MachO {
             },
             Import {
                 name: "_fprintf",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24824,
                 size: 8,
@@ -1951,7 +1950,7 @@ MachO {
             },
             Import {
                 name: "_fputs",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24832,
                 size: 8,
@@ -1962,7 +1961,7 @@ MachO {
             },
             Import {
                 name: "_free",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24840,
                 size: 8,
@@ -1973,7 +1972,7 @@ MachO {
             },
             Import {
                 name: "_fts_children$INODE64",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24848,
                 size: 8,
@@ -1984,7 +1983,7 @@ MachO {
             },
             Import {
                 name: "_fts_close$INODE64",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24856,
                 size: 8,
@@ -1995,7 +1994,7 @@ MachO {
             },
             Import {
                 name: "_fts_open$INODE64",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24864,
                 size: 8,
@@ -2006,7 +2005,7 @@ MachO {
             },
             Import {
                 name: "_fts_read$INODE64",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24872,
                 size: 8,
@@ -2017,7 +2016,7 @@ MachO {
             },
             Import {
                 name: "_fts_set$INODE64",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24880,
                 size: 8,
@@ -2028,7 +2027,7 @@ MachO {
             },
             Import {
                 name: "_getbsize",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24888,
                 size: 8,
@@ -2039,7 +2038,7 @@ MachO {
             },
             Import {
                 name: "_getenv",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24896,
                 size: 8,
@@ -2050,7 +2049,7 @@ MachO {
             },
             Import {
                 name: "_getgrgid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24904,
                 size: 8,
@@ -2061,7 +2060,7 @@ MachO {
             },
             Import {
                 name: "_getopt",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24912,
                 size: 8,
@@ -2072,7 +2071,7 @@ MachO {
             },
             Import {
                 name: "_getpid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24920,
                 size: 8,
@@ -2083,7 +2082,7 @@ MachO {
             },
             Import {
                 name: "_getpwuid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24928,
                 size: 8,
@@ -2094,7 +2093,7 @@ MachO {
             },
             Import {
                 name: "_getuid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24936,
                 size: 8,
@@ -2105,7 +2104,7 @@ MachO {
             },
             Import {
                 name: "_getxattr",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24944,
                 size: 8,
@@ -2116,7 +2115,7 @@ MachO {
             },
             Import {
                 name: "_group_from_gid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24952,
                 size: 8,
@@ -2138,7 +2137,7 @@ MachO {
             },
             Import {
                 name: "_ioctl",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24968,
                 size: 8,
@@ -2149,7 +2148,7 @@ MachO {
             },
             Import {
                 name: "_isatty",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24976,
                 size: 8,
@@ -2160,7 +2159,7 @@ MachO {
             },
             Import {
                 name: "_kill",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24984,
                 size: 8,
@@ -2171,7 +2170,7 @@ MachO {
             },
             Import {
                 name: "_listxattr",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 24992,
                 size: 8,
@@ -2182,7 +2181,7 @@ MachO {
             },
             Import {
                 name: "_localtime",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25000,
                 size: 8,
@@ -2193,7 +2192,7 @@ MachO {
             },
             Import {
                 name: "_malloc",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25008,
                 size: 8,
@@ -2204,7 +2203,7 @@ MachO {
             },
             Import {
                 name: "_mbr_uuid_to_id",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25016,
                 size: 8,
@@ -2215,7 +2214,7 @@ MachO {
             },
             Import {
                 name: "_mbr_uuid_to_string",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25024,
                 size: 8,
@@ -2226,7 +2225,7 @@ MachO {
             },
             Import {
                 name: "_mbrtowc",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25032,
                 size: 8,
@@ -2237,7 +2236,7 @@ MachO {
             },
             Import {
                 name: "_memchr",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25040,
                 size: 8,
@@ -2248,7 +2247,7 @@ MachO {
             },
             Import {
                 name: "_nl_langinfo",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25048,
                 size: 8,
@@ -2259,7 +2258,7 @@ MachO {
             },
             Import {
                 name: "_printf",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25056,
                 size: 8,
@@ -2270,7 +2269,7 @@ MachO {
             },
             Import {
                 name: "_putchar",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25064,
                 size: 8,
@@ -2281,7 +2280,7 @@ MachO {
             },
             Import {
                 name: "_readlink",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25072,
                 size: 8,
@@ -2292,7 +2291,7 @@ MachO {
             },
             Import {
                 name: "_realloc",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25080,
                 size: 8,
@@ -2303,7 +2302,7 @@ MachO {
             },
             Import {
                 name: "_setenv",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25088,
                 size: 8,
@@ -2314,7 +2313,7 @@ MachO {
             },
             Import {
                 name: "_setlocale",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25096,
                 size: 8,
@@ -2325,7 +2324,7 @@ MachO {
             },
             Import {
                 name: "_signal",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25104,
                 size: 8,
@@ -2336,7 +2335,7 @@ MachO {
             },
             Import {
                 name: "_snprintf",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25112,
                 size: 8,
@@ -2347,7 +2346,7 @@ MachO {
             },
             Import {
                 name: "_sscanf",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25120,
                 size: 8,
@@ -2358,7 +2357,7 @@ MachO {
             },
             Import {
                 name: "_strcoll",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25128,
                 size: 8,
@@ -2369,7 +2368,7 @@ MachO {
             },
             Import {
                 name: "_strcpy",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25136,
                 size: 8,
@@ -2380,7 +2379,7 @@ MachO {
             },
             Import {
                 name: "_strdup",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25144,
                 size: 8,
@@ -2391,7 +2390,7 @@ MachO {
             },
             Import {
                 name: "_strerror",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25152,
                 size: 8,
@@ -2402,7 +2401,7 @@ MachO {
             },
             Import {
                 name: "_strftime",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25160,
                 size: 8,
@@ -2413,7 +2412,7 @@ MachO {
             },
             Import {
                 name: "_strlen",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25168,
                 size: 8,
@@ -2424,7 +2423,7 @@ MachO {
             },
             Import {
                 name: "_strmode",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25176,
                 size: 8,
@@ -2468,7 +2467,7 @@ MachO {
             },
             Import {
                 name: "_time",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25208,
                 size: 8,
@@ -2490,7 +2489,7 @@ MachO {
             },
             Import {
                 name: "_user_from_uid",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25224,
                 size: 8,
@@ -2501,7 +2500,7 @@ MachO {
             },
             Import {
                 name: "_warn",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25232,
                 size: 8,
@@ -2512,7 +2511,7 @@ MachO {
             },
             Import {
                 name: "_warnx",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25240,
                 size: 8,
@@ -2523,7 +2522,7 @@ MachO {
             },
             Import {
                 name: "_wcwidth",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25248,
                 size: 8,
@@ -2534,7 +2533,7 @@ MachO {
             },
             Import {
                 name: "_write",
-                dylib: "/usr/lib/libSystem.B.dylib",
+                dylib: "very_very_very_very_very_very_very_longid",
                 is_lazy: true,
                 offset: 25256,
                 size: 8,

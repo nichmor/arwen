@@ -1,6 +1,5 @@
 ---
 source: crates/arwen-elf/tests/elf_tests.rs
-assertion_line: 78
 expression: changed_macho.rpaths
 ---
 [
