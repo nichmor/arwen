@@ -20,7 +20,7 @@ license.workspace = true
 name = "arwen"
 readme.workspace = true
 repository.workspace = true
-version = "0.0.4"
+version = "0.0.5"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [workspace.dependencies]
