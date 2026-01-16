@@ -56,6 +56,20 @@ impl<'a> ElfContainer<'a> {
         }
     }
 
+    /// Get the RPATH/RUNPATH entries as a list of paths.
+    /// Returns entries from DT_RUNPATH if present, otherwise DT_RPATH.
+    pub fn get_rpath(&self) -> Vec<String> {
+        if let Some(runpath) = self.inner.elf_runpath() {
+            let path_str = String::from_utf8_lossy(runpath);
+            if path_str.is_empty() {
+                return Vec::new();
+            }
+            path_str.split(':').map(|s| s.to_string()).collect()
+        } else {
+            Vec::new()
+        }
+    }
+
     /// Force the ELF file to use the DT_RPATH instead of DT_RUNPATH.
     pub fn force_rpath(&mut self) -> Result<(), ElfError> {
         self.inner.elf_use_rpath()?;
