@@ -141,6 +141,15 @@ impl SingleMachO<'_> {
             .position(|name| name == &old_name)
             .ok_or(MachoError::DylibNameMissing(old_name.to_string()))?;
 
+        // If `old_dylib == 0`, it means the matched dylib name is the file's own install ID.
+        if old_dylib == 0 {
+            return Err(MachoError::InvalidOperation(format!(
+                "cannot change install name: '{}' refers to the file's own install ID\n\
+                hint: use `change-install-id` instead",
+                old_name
+            )));
+        }
+
         // now based on the index, we need to find the RpathCommand from the load commands
         // we use -1 because dylib contains self, so we need to omit it
         let (load_command, old_dylib) =
@@ -462,6 +471,9 @@ pub enum MachoError {
 
     #[error("requested dylib name is missing: {0}")]
     DylibNameMissing(String),
+
+    #[error("{0}")]
+    InvalidOperation(String),
 
     #[error("LC_ID_DYLIB is missing or file is not a shared library")]
     DylibIdMissing,
