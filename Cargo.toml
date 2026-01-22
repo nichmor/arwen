@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/arwen-core",
-    "crates/arwen-elf",
-    "crates/arwen-macho",
-    "crates/arwen",
+  "crates/arwen-core",
+  "crates/arwen-elf",
+  "crates/arwen-macho",
+  "crates/arwen",
 ]
 exclude = ["py-arwen/*"]
 
