@@ -1,0 +1,7 @@
+---
+source: crates/arwen-macho/tests/macho_tests.rs
+expression: changed_macho.rpaths
+---
+[
+    "path_graf_path_graf_path_graf_path_graf",
+]
