@@ -84,9 +84,6 @@ dependencies = [
 [[package]]
 name = "arwen-core"
 version = "0.1.0"
-dependencies = [
- "thiserror",
-]
 
 [[package]]
 name = "arwen-elf"

@@ -9,6 +9,9 @@ repository.workspace = true
 description = "Mach-O binary patching library"
 keywords = ["macho", "binary", "patching", "dylib", "darwin"]
 
+[package.metadata.cargo-machete]
+ignored = ["arwen-core"]
+
 [dependencies]
 arwen-core = { workspace = true }
 goblin = { workspace = true }

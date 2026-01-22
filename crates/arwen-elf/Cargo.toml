@@ -9,6 +9,9 @@ repository.workspace = true
 description = "ELF binary patching library"
 keywords = ["elf", "binary", "patching", "linker"]
 
+[package.metadata.cargo-machete]
+ignored = ["arwen-core"]
+
 [dependencies]
 arwen-core = { workspace = true }
 object = { workspace = true }

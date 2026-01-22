@@ -8,6 +8,9 @@ license.workspace = true
 repository.workspace = true
 description = "A cross-platform binary patching tool for Mach-O and ELF"
 
+[package.metadata.cargo-machete]
+ignored = ["arwen-core"]
+
 [[bin]]
 name = "arwen"
 path = "src/main.rs"

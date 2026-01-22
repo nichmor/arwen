@@ -9,4 +9,3 @@ repository.workspace = true
 description = "Core types and traits for arwen binary patching tools"
 
 [dependencies]
-thiserror = { workspace = true }
