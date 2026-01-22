@@ -19,9 +19,9 @@ categories = ["parsing", "development-tools::debugging"]
 
 [workspace.dependencies]
 # Internal crates
-arwen-core = { path = "crates/arwen-core", version = "0.0.3" }
-arwen-elf = { path = "crates/arwen-elf", version = "0.0.3" }
-arwen-macho = { path = "crates/arwen-macho", version = "0.0.3" }
+arwen-core = { path = "crates/arwen-core", version = "0.1.0" }
+arwen-elf = { path = "crates/arwen-elf", version = "0.1.0" }
+arwen-macho = { path = "crates/arwen-macho", version = "0.1.0" }
 
 # External dependencies
 goblin = { version = "0.10.4", features = ["mach64"] }

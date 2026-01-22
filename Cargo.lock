@@ -69,7 +69,7 @@ dependencies = [
 
 [[package]]
 name = "arwen"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "arwen-core",
  "arwen-elf",
@@ -83,14 +83,14 @@ dependencies = [
 
 [[package]]
 name = "arwen-core"
-version = "0.0.3"
+version = "0.1.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "arwen-elf"
-version = "0.0.3"
+version = "0.1.0"
 dependencies = [
  "arwen-core",
  "goblin",
@@ -103,7 +103,7 @@ dependencies = [
 
 [[package]]
 name = "arwen-macho"
-version = "0.0.3"
+version = "0.1.0"
 dependencies = [
  "arwen-core",
  "goblin",

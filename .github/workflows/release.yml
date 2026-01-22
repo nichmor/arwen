@@ -31,7 +31,28 @@ jobs:
       - name: Clean up test artifacts
         run: rm -rf .pixi .pytest_cache
 
-      - name: Publish to crates.io
+      - name: Publish arwen-core to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish --verbose --token $CARGO_REGISTRY_TOKEN
+        run: cargo publish -p arwen-core --token $CARGO_REGISTRY_TOKEN
+
+      - name: Wait for arwen-core to be indexed
+        run: sleep 30
+
+      - name: Publish arwen-elf to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p arwen-elf --token $CARGO_REGISTRY_TOKEN
+
+      - name: Publish arwen-macho to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p arwen-macho --token $CARGO_REGISTRY_TOKEN
+
+      - name: Wait for libraries to be indexed
+        run: sleep 30
+
+      - name: Publish arwen to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p arwen --token $CARGO_REGISTRY_TOKEN

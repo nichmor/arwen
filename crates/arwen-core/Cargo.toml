@@ -1,6 +1,6 @@
 [package]
 name = "arwen-core"
-version = "0.0.3"
+version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
