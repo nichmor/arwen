@@ -1,0 +1,5 @@
+---
+source: crates/arwen-macho/tests/macho_tests.rs
+expression: macho_container.data.len()
+---
+53040
