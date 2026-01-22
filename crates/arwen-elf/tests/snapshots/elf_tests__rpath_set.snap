@@ -1,0 +1,7 @@
+---
+source: crates/arwen-elf/tests/elf_tests.rs
+expression: changed_elf.runpaths
+---
+[
+    "path_graf_path_graf_path_graf_path_graf",
+]

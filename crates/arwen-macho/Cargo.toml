@@ -1,0 +1,24 @@
+[package]
+name = "arwen-macho"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Mach-O binary patching library"
+keywords = ["macho", "binary", "patching", "dylib", "darwin"]
+
+[package.metadata.cargo-machete]
+ignored = ["arwen-core"]
+
+[dependencies]
+arwen-core = { workspace = true }
+goblin = { workspace = true }
+scroll = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+rstest = { workspace = true }
+tempfile = { workspace = true }

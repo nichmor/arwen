@@ -67,7 +67,7 @@ generate-cli-docs = "cargo run --locked --manifest-path docs_bin/Cargo.toml"
 [tasks]
 build-debug = "cargo build"
 build-release = "cargo build --release"
-install = "cargo install --path . --locked"
+install = "cargo install --path crates/arwen --locked"
 
 ruby-install = "bundle install"
 

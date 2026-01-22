@@ -1,5 +1,0 @@
----
-source: tests/unit/elf/x32/test_patching.rs
-expression: changed_elf_data.len()
----
-860452

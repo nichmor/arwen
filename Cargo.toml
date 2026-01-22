@@ -1,5 +1,11 @@
 [workspace]
 resolver = "2"
+members = [
+  "crates/arwen-core",
+  "crates/arwen-elf",
+  "crates/arwen-macho",
+  "crates/arwen",
+]
 exclude = ["py-arwen/*"]
 
 [workspace.package]
@@ -11,43 +17,20 @@ readme = "README.md"
 repository = "https://github.com/nichmor/arwen"
 categories = ["parsing", "development-tools::debugging"]
 
-[package]
-authors.workspace = true
-description = "A cross-platform binary patching tool for Mach-O and ELF."
-edition.workspace = true
-homepage.workspace = true
-license.workspace = true
-name = "arwen"
-readme.workspace = true
-repository.workspace = true
-version = "0.0.5"
-include = ["src/**/*", "LICENSE", "README.md"]
-
 [workspace.dependencies]
+# Internal crates
+arwen-core = { path = "crates/arwen-core", version = "0.1.0" }
+arwen-elf = { path = "crates/arwen-elf", version = "0.1.0" }
+arwen-macho = { path = "crates/arwen-macho", version = "0.1.0" }
+
+# External dependencies
 goblin = { version = "0.10.4", features = ["mach64"] }
 object = { version = "0.38.1", features = ["write", "build"] }
 clap = { version = "4.5.26", features = ["derive"] }
 scroll = "0.13.0"
 thiserror = "2.0.11"
 
-
-[dependencies]
-clap = { workspace = true }
-scroll = { workspace = true }
-thiserror = { workspace = true }
-goblin = { workspace = true }
-object = { workspace = true }
-
-
-[dev-dependencies]
+# Dev dependencies
 insta = "1.42.0"
 tempfile = "3.16.0"
 rstest = "0.26.0"
-
-
-# [patch.crates-io]
-# object = { git = "https://github.com/nichmor/object.git", branch = "feat/expose-header-as-mut" }
-# object-rewrite = { git = "https://github.com/nichmor/object.git", branch = "feat/expose-header-as-mut" }
-
-# object = { path = "../object" }
-# object-rewrite = { path = "../object/crates/rewrite" }

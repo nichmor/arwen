@@ -1,7 +1,0 @@
----
-source: tests/unit/elf/x64/test_rpath.rs
-expression: changed_elf.runpaths
----
-[
-    "path_graf_path_graf_path_graf_path_graf",
-]

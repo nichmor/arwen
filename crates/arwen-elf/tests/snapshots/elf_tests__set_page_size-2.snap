@@ -1,0 +1,5 @@
+---
+source: crates/arwen-elf/tests/elf_tests.rs
+expression: changed_elf_data.len()
+---
+934728
