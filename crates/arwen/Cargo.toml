@@ -1,6 +1,6 @@
 [package]
 name = "arwen"
-version = "0.0.3"
+version = "0.0.5"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
