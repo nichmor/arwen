@@ -190,8 +190,6 @@ def test_binaries(tmp_path_factory) -> List[Tuple[str, Path]]:
         print("Creating test binaries (no pre-built assets found)...")
 
         exe = create_test_binary(tmpdir, "test_exe", is_dylib=False)
-        breakpoint()
-        
         if exe:
             test_bins.append(("executable", exe))
 

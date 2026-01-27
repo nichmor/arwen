@@ -3,10 +3,11 @@
 //! This tool provides a simple interface for signing Mach-O binaries,
 //! compatible with the test suite expectations.
 
-use arwen_codesign::{adhoc_sign_file, AdhocSignOptions, Entitlements};
+use arwen_codesign::{adhoc_sign, AdhocSignOptions, Entitlements};
 use clap::Parser;
 use std::path::PathBuf;
 use std::process;
+use std::fs;
 
 #[derive(Parser)]
 #[command(name = "codesign_tool")]
@@ -57,12 +58,31 @@ fn main() {
     }
 
     // Perform signing
-    match adhoc_sign_file(&args.file, &options) {
+    // Read the binary file
+    let data = match fs::read(&args.file) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("Error reading {}: {}", args.file.display(), e);
+            process::exit(1);
+        }
+    };
+
+    // Sign it
+    let signed_data = match adhoc_sign(data, &options) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("Error signing {}: {}", args.file.display(), e);
+            process::exit(1);
+        }
+    };
+
+    // Write the signed binary back
+    match fs::write(&args.file, signed_data) {
         Ok(()) => {
             println!("Successfully signed: {}", args.file.display());
         }
         Err(e) => {
-            eprintln!("Error signing {}: {}", args.file.display(), e);
+            eprintln!("Error writing {}: {}", args.file.display(), e);
             process::exit(1);
         }
     }

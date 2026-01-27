@@ -40,6 +40,8 @@ pub mod constants {
     pub const CSMAGIC_CODEDIRECTORY: u32 = 0xfade0c02;
     /// Magic number for Requirements blob
     pub const CSMAGIC_REQUIREMENTS: u32 = 0xfade0c01;
+    /// Magic number for BlobWrapper (used for CMS signature)
+    pub const CSMAGIC_BLOBWRAPPER: u32 = 0xfade0b01;
     /// Magic number for embedded entitlements (plist format)
     pub const CSMAGIC_EMBEDDED_ENTITLEMENTS: u32 = 0xfade7171;
     /// Magic number for embedded entitlements (DER format)
@@ -52,6 +54,8 @@ pub mod constants {
     pub const CSSLOT_REQUIREMENTS: u32 = 2;
     /// Slot index for entitlements
     pub const CSSLOT_ENTITLEMENTS: u32 = 5;
+    /// Slot index for CMS Signature
+    pub const CSSLOT_SIGNATURESLOT: u32 = 0x10000;
     /// Slot index for DER entitlements
     pub const CSSLOT_ENTITLEMENTS_DER: u32 = 7;
     /// SHA-256 hash type
@@ -533,12 +537,18 @@ pub fn generate_adhoc_signature(
         0
     };
 
-    // Number of blobs: CodeDirectory + optional Entitlements
-    let blob_count = if has_entitlements { 2 } else { 1 };
+    // Requirements blob: always included (12 bytes for empty requirements)
+    let requirements_blob_size = 12;
+
+    // CMS Signature blobwrapper: always included (8 bytes for empty wrapper)
+    let cms_blob_size = 8;
+
+    // Number of blobs: CodeDirectory + Requirements + CMS Signature + optional Entitlements
+    let blob_count = if has_entitlements { 4 } else { 3 };
     let n_special_slots: u32 = if has_entitlements {
         CSSLOT_ENTITLEMENTS // 5 - we need slots 1-5
     } else {
-        0
+        CSSLOT_REQUIREMENTS // 2 - we need slots 1-2 (for Requirements)
     };
 
     let superblob_size = 12; // SuperBlob header
@@ -554,14 +564,24 @@ pub fn generate_adhoc_signature(
     let codedir_total = codedir_size + id_len + special_hashes_size + code_hashes_size;
 
     // Calculate total blob content size
-    let blob_content_size =
-        superblob_size + blob_indices_size + codedir_total + entitlements_blob_size;
+    let blob_content_size = superblob_size
+        + blob_indices_size
+        + codedir_total
+        + requirements_blob_size
+        + cms_blob_size
+        + entitlements_blob_size;
     // Apple aligns code signature datasize to 8 bytes
     let padded_sig_size = (blob_content_size + 7) & !7;
 
     // Calculate blob offsets
     let codedir_offset = superblob_size + blob_indices_size;
-    let entitlements_offset = codedir_offset + codedir_total;
+    let requirements_offset = codedir_offset + codedir_total;
+    let entitlements_offset = requirements_offset + requirements_blob_size;
+    let cms_offset = if has_entitlements {
+        entitlements_offset + entitlements_blob_size
+    } else {
+        requirements_offset + requirements_blob_size
+    };
 
     // Build the signature
     let superblob = SuperBlob {
@@ -604,6 +624,13 @@ pub fn generate_adhoc_signature(
     sig.gwrite_with(codedir_index, &mut offset, BE)
         .map_err(|e| error::Error::Malformed(e.to_string()))?;
 
+    let requirements_index = BlobIndex {
+        typ: CSSLOT_REQUIREMENTS,
+        offset: requirements_offset as u32,
+    };
+    sig.gwrite_with(requirements_index, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+
     if has_entitlements {
         let ent_index = BlobIndex {
             typ: CSSLOT_ENTITLEMENTS,
@@ -612,6 +639,33 @@ pub fn generate_adhoc_signature(
         sig.gwrite_with(ent_index, &mut offset, BE)
             .map_err(|e| error::Error::Malformed(e.to_string()))?;
     }
+
+    let cms_index = BlobIndex {
+        typ: CSSLOT_SIGNATURESLOT,
+        offset: cms_offset as u32,
+    };
+    sig.gwrite_with(cms_index, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+
+    // Calculate requirements hash for special slot (always present)
+    let requirements_hash: [u8; 32] = {
+        // Build the requirements blob first to hash it
+        let mut req_blob = vec![0u8; requirements_blob_size];
+        let mut req_offset = 0usize;
+        req_blob
+            .gwrite_with(CSMAGIC_REQUIREMENTS, &mut req_offset, BE)
+            .map_err(|e| error::Error::Malformed(e.to_string()))?;
+        req_blob
+            .gwrite_with(requirements_blob_size as u32, &mut req_offset, BE)
+            .map_err(|e| error::Error::Malformed(e.to_string()))?;
+        req_blob
+            .gwrite_with(0u32, &mut req_offset, BE) // count = 0 for empty requirements
+            .map_err(|e| error::Error::Malformed(e.to_string()))?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(&req_blob);
+        hasher.finalize().into()
+    };
 
     // Calculate entitlements hash for special slot (if present)
     let entitlements_hash: [u8; 32] = if has_entitlements {
@@ -680,15 +734,14 @@ pub fn generate_adhoc_signature(
 
     // Write special slot hashes (in reverse order: slot 5 first, then 4, 3, 2, 1)
     // Special slots are at negative offsets from hash_offset
-    if has_entitlements {
-        // Slots 1-4 are empty (zeros), slot 5 is entitlements
-        for slot in (1..=n_special_slots).rev() {
-            if slot == CSSLOT_ENTITLEMENTS {
-                sig[offset..offset + 32].copy_from_slice(&entitlements_hash);
-            }
-            // zeros are already in place from initialization
-            offset += 32;
+    for slot in (1..=n_special_slots).rev() {
+        if slot == CSSLOT_ENTITLEMENTS && has_entitlements {
+            sig[offset..offset + 32].copy_from_slice(&entitlements_hash);
+        } else if slot == CSSLOT_REQUIREMENTS {
+            sig[offset..offset + 32].copy_from_slice(&requirements_hash);
         }
+        // Other slots (1, 3, 4) are zeros, already in place from initialization
+        offset += 32;
     }
 
     // Calculate and write page hashes
@@ -703,6 +756,14 @@ pub fn generate_adhoc_signature(
         data_offset = end;
     }
 
+    // Write requirements blob (always present, empty for adhoc)
+    sig.gwrite_with(CSMAGIC_REQUIREMENTS, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+    sig.gwrite_with(requirements_blob_size as u32, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+    sig.gwrite_with(0u32, &mut offset, BE) // count = 0 for empty requirements
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+
     // Write entitlements blob (if present)
     if has_entitlements {
         sig.gwrite_with(CSMAGIC_EMBEDDED_ENTITLEMENTS, &mut offset, BE)
@@ -710,7 +771,14 @@ pub fn generate_adhoc_signature(
         sig.gwrite_with(entitlements_blob_size as u32, &mut offset, BE)
             .map_err(|e| error::Error::Malformed(e.to_string()))?;
         sig[offset..offset + entitlements_data.len()].copy_from_slice(entitlements_data);
+        offset += entitlements_data.len();
     }
+
+    // Write CMS signature blobwrapper (empty for adhoc)
+    sig.gwrite_with(CSMAGIC_BLOBWRAPPER, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
+    sig.gwrite_with(cms_blob_size as u32, &mut offset, BE)
+        .map_err(|e| error::Error::Malformed(e.to_string()))?;
 
     // Padding is already in place from initialization with zeros
 
@@ -974,11 +1042,17 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
         0
     };
 
-    let blob_count = if has_entitlements { 2 } else { 1 };
+    // Requirements blob: always included (12 bytes for empty requirements)
+    let requirements_blob_size = 12;
+
+    // CMS Signature blobwrapper: always included (8 bytes for empty wrapper)
+    let cms_blob_size = 8;
+
+    let blob_count = if has_entitlements { 4 } else { 3 };
     let n_special_slots: u32 = if has_entitlements {
         CSSLOT_ENTITLEMENTS
     } else {
-        0
+        CSSLOT_REQUIREMENTS
     };
 
     let superblob_size = 12;
@@ -991,8 +1065,12 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
     let hash_offset = codedir_size + id_len + special_hashes_size;
     let codedir_total = codedir_size + id_len + special_hashes_size + code_hashes_size;
 
-    let blob_content_size =
-        superblob_size + blob_indices_size + codedir_total + entitlements_blob_size;
+    let blob_content_size = superblob_size
+        + blob_indices_size
+        + codedir_total
+        + requirements_blob_size
+        + cms_blob_size
+        + entitlements_blob_size;
     let padded_sig_size = (blob_content_size + 7) & !7;
 
     // Update the header+cmds buffer with new values
@@ -1074,7 +1152,32 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     // Build the signature blob
     let codedir_offset_in_sig = superblob_size + blob_indices_size;
-    let entitlements_offset_in_sig = codedir_offset_in_sig + codedir_total;
+    let requirements_offset_in_sig = codedir_offset_in_sig + codedir_total;
+    let entitlements_offset_in_sig = requirements_offset_in_sig + requirements_blob_size;
+    let cms_offset_in_sig = if has_entitlements {
+        entitlements_offset_in_sig + entitlements_blob_size
+    } else {
+        requirements_offset_in_sig + requirements_blob_size
+    };
+
+    // Calculate requirements hash (always present)
+    let requirements_hash: [u8; 32] = {
+        let mut req_blob = vec![0u8; requirements_blob_size];
+        let mut req_offset = 0usize;
+        req_blob
+            .gwrite_with(CSMAGIC_REQUIREMENTS, &mut req_offset, BE)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+        req_blob
+            .gwrite_with(requirements_blob_size as u32, &mut req_offset, BE)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+        req_blob
+            .gwrite_with(0u32, &mut req_offset, BE)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(&req_blob);
+        hasher.finalize().into()
+    };
 
     // Calculate entitlements hash if needed
     let entitlements_hash: [u8; 32] = if has_entitlements {
@@ -1116,6 +1219,14 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
     sig.gwrite_with(codedir_index, &mut sig_offset, BE)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
 
+    // BlobIndex for Requirements
+    let requirements_index = BlobIndex {
+        typ: CSSLOT_REQUIREMENTS,
+        offset: requirements_offset_in_sig as u32,
+    };
+    sig.gwrite_with(requirements_index, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+
     // BlobIndex for entitlements (if present)
     if has_entitlements {
         let ent_index = BlobIndex {
@@ -1125,6 +1236,14 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
         sig.gwrite_with(ent_index, &mut sig_offset, BE)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
     }
+
+    // BlobIndex for CMS Signature
+    let cms_index = BlobIndex {
+        typ: CSSLOT_SIGNATURESLOT,
+        offset: cms_offset_in_sig as u32,
+    };
+    sig.gwrite_with(cms_index, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
 
     // CodeDirectory
     let mut flags = CS_ADHOC;
@@ -1172,19 +1291,27 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
     sig_offset += 1;
 
     // Special slot hashes (in reverse order)
-    if has_entitlements {
-        for slot in (1..=n_special_slots).rev() {
-            if slot == CSSLOT_ENTITLEMENTS {
-                sig[sig_offset..sig_offset + 32].copy_from_slice(&entitlements_hash);
-            }
-            // zeros are already in place from initialization
-            sig_offset += 32;
+    for slot in (1..=n_special_slots).rev() {
+        if slot == CSSLOT_ENTITLEMENTS && has_entitlements {
+            sig[sig_offset..sig_offset + 32].copy_from_slice(&entitlements_hash);
+        } else if slot == CSSLOT_REQUIREMENTS {
+            sig[sig_offset..sig_offset + 32].copy_from_slice(&requirements_hash);
         }
+        // Other slots are zeros, already in place from initialization
+        sig_offset += 32;
     }
 
     // Code page hashes
     sig[sig_offset..sig_offset + page_hashes.len()].copy_from_slice(&page_hashes);
     sig_offset += page_hashes.len();
+
+    // Requirements blob (always present, empty for adhoc)
+    sig.gwrite_with(CSMAGIC_REQUIREMENTS, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+    sig.gwrite_with(requirements_blob_size as u32, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+    sig.gwrite_with(0u32, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
 
     // Entitlements blob (if present)
     if has_entitlements {
@@ -1193,7 +1320,14 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
         sig.gwrite_with(entitlements_blob_size as u32, &mut sig_offset, BE)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
         sig[sig_offset..sig_offset + entitlements_data.len()].copy_from_slice(entitlements_data);
+        sig_offset += entitlements_data.len();
     }
+
+    // CMS signature blobwrapper (empty for adhoc)
+    sig.gwrite_with(CSMAGIC_BLOBWRAPPER, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+    sig.gwrite_with(cms_blob_size as u32, &mut sig_offset, BE)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
 
     // Padding is already in place from initialization with zeros
 
