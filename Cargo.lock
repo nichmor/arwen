@@ -71,6 +71,7 @@ dependencies = [
 name = "arwen"
 version = "0.1.0"
 dependencies = [
+ "arwen-codesign",
  "arwen-core",
  "arwen-elf",
  "arwen-macho",

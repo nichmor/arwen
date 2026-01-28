@@ -15,7 +15,7 @@ def pytest_addoption(parser):
         "--goblin-tool",
         type=str,
         default=None,
-        help="Path to arwen's codesign tool binary",
+        help="Path to arwen CLI binary",
     )
     parser.addoption(
         "--strict-codesign",
@@ -46,22 +46,22 @@ def pytest_configure(config):
 # ============================================================================
 
 def build_goblin_tool(project_root: Path) -> Optional[Path]:
-    """Build the arwen codesign_tool example."""
-    print("Building arwen codesign_tool example...")
+    """Build the arwen CLI tool."""
+    print("Building arwen CLI...")
 
-    # Build the codesign_tool example
+    # Build the main arwen binary
     result = subprocess.run(
-        ["cargo", "build", "--release", "--example", "codesign_tool", "-p", "arwen-codesign"],
+        ["cargo", "build", "--release"],
         cwd=project_root,
         capture_output=True,
         text=True,
     )
 
     if result.returncode != 0:
-        print(f"Failed to build codesign_tool: {result.stderr}")
+        print(f"Failed to build arwen: {result.stderr}")
         return None
 
-    tool_path = project_root / "target" / "release" / "examples" / "codesign_tool"
+    tool_path = project_root / "target" / "release" / "arwen"
     if tool_path.exists():
         return tool_path
 
@@ -130,12 +130,12 @@ int add(int a, int b) {
 
 @pytest.fixture(scope="session")
 def goblin_tool(request) -> Path:
-    """Pytest fixture that builds or locates the arwen codesign tool.
+    """Pytest fixture that builds or locates the arwen CLI tool.
 
     Can be overridden via pytest command line: --goblin-tool=<path>
 
     Note: The fixture is named 'goblin_tool' for historical reasons (migrated from goblin-ext),
-    but it now provides the arwen codesign tool.
+    but it now provides the arwen CLI binary.
     """
     # Check if provided via pytest command line
     tool_path = request.config.getoption("--goblin-tool", default=None)

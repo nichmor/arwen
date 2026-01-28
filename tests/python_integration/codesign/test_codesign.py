@@ -190,7 +190,7 @@ def sign_with_apple_codesign(input_path: Path, output_path: Path, identifier: st
 def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
                      identifier: str, hardened_runtime: bool = False,
                      preserve_entitlements: bool = False) -> tuple[bool, str]:
-    """Sign a binary using arwen's codesign_tool."""
+    """Sign a binary using arwen CLI."""
     shutil.copy(input_path, output_path)
     os.chmod(output_path, 0o755)
 
@@ -198,8 +198,8 @@ def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
     info = get_codesign_info(input_path)
     is_linker_signed = info.get("linker_signed", False)
 
-    # New CLI interface matching codesign_tool
-    cmd = [str(goblin_tool), "--identifier", identifier]
+    # Use arwen CLI: arwen macho adhoc-sign [OPTIONS] --identifier <ID> <FILE>
+    cmd = [str(goblin_tool), "macho", "adhoc-sign", "--identifier", identifier]
 
     if hardened_runtime:
         cmd.append("--hardened-runtime")
@@ -220,7 +220,7 @@ def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
     except subprocess.TimeoutExpired:
         return False, "Timeout"
     except FileNotFoundError:
-        return False, f"Codesign tool not found at {goblin_tool}"
+        return False, f"Arwen CLI not found at {goblin_tool}"
 
 
 def _run_adhoc_signing_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,

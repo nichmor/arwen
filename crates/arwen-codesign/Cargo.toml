@@ -12,10 +12,6 @@ keywords = ["macho", "codesign", "signing", "darwin", "binary"]
 [package.metadata.cargo-machete]
 ignored = []
 
-[[example]]
-name = "codesign_tool"
-path = "examples/codesign_tool.rs"
-
 [dependencies]
 goblin = { workspace = true }
 scroll = { workspace = true }
