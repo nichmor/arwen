@@ -36,14 +36,13 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "codesign: mark test as a code signing integration test"
     )
-    config.addinivalue_line(
-        "markers", "macos_only: mark test as macOS-only"
-    )
+    config.addinivalue_line("markers", "macos_only: mark test as macOS-only")
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def build_goblin_tool(project_root: Path) -> Optional[Path]:
     """Build the arwen CLI tool."""
@@ -79,7 +78,9 @@ def get_prebuilt_assets() -> Optional[Path]:
     return None
 
 
-def copy_asset_to_temp(assets_dir: Path, asset_name: str, tmpdir: Path) -> Optional[Path]:
+def copy_asset_to_temp(
+    assets_dir: Path, asset_name: str, tmpdir: Path
+) -> Optional[Path]:
     """Copy a pre-built asset to the temp directory."""
     src = assets_dir / asset_name
     if not src.exists():
@@ -90,19 +91,21 @@ def copy_asset_to_temp(assets_dir: Path, asset_name: str, tmpdir: Path) -> Optio
     return dst
 
 
-def create_test_binary(tmpdir: Path, name: str, is_dylib: bool = False) -> Optional[Path]:
+def create_test_binary(
+    tmpdir: Path, name: str, is_dylib: bool = False
+) -> Optional[Path]:
     """Create a minimal test binary using clang."""
-    MINIMAL_MAIN = '''
+    MINIMAL_MAIN = """
 int main(void) {
     return 0;
 }
-'''
-    MINIMAL_DYLIB = '''
+"""
+    MINIMAL_DYLIB = """
 __attribute__((visibility("default")))
 int add(int a, int b) {
     return a + b;
 }
-'''
+"""
     source_file = tmpdir / f"{name}.c"
     output_file = tmpdir / (f"lib{name}.dylib" if is_dylib else name)
 
@@ -127,6 +130,7 @@ int add(int a, int b) {
 # ============================================================================
 # Pytest Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def goblin_tool(request) -> Path:
