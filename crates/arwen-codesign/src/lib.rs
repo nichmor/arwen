@@ -511,10 +511,7 @@ pub fn extract_entitlements(data: &[u8]) -> Option<Vec<u8>> {
 ///
 /// # Returns
 /// Allocated signature size in bytes (always >= blob_content_size)
-fn calculate_apple_signature_allocation(
-    blob_content_size: usize,
-    n_code_pages: usize,
-) -> usize {
+fn calculate_apple_signature_allocation(blob_content_size: usize, n_code_pages: usize) -> usize {
     // Apple's empirically-derived formula (linear regression from 5-42 page range)
     // Formula: 18259 + (n_pages * 28.1), rounded to 16-byte boundaries
     //
@@ -654,8 +651,7 @@ pub fn generate_adhoc_signature(
     if is_64bit {
         // Update vmsize (offset 32 from segment command start)
         let vmsize_offset = linkedit_cmd_offset + 32;
-        data[vmsize_offset..vmsize_offset + 8]
-            .copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
+        data[vmsize_offset..vmsize_offset + 8].copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
 
         // Update filesize (offset 48 from segment command start)
         let filesize_offset = linkedit_cmd_offset + 48;
