@@ -86,14 +86,12 @@ dependencies = [
 name = "arwen-codesign"
 version = "0.1.0"
 dependencies = [
- "clap",
  "goblin",
  "insta",
  "rstest",
  "scroll",
  "sha2",
  "tempfile",
- "thiserror",
 ]
 
 [[package]]
