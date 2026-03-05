@@ -51,7 +51,6 @@ adhoc_sign_file(Path::new("/path/to/binary"), &options)?;
 Python tests are available in the workspace `tests/python_integration/codesign/`:
 
 - `test_codesign.py` - Comprehensive tests comparing against Apple's codesign tool
-- `analyze_codesign.py` - Analysis tool for inspecting code signatures
 
 Test assets are located in `tests/data/macho/codesign/` and include various signed/unsigned Mach-O binaries:
 - `test_exe_adhoc` - Ad-hoc signed executable
