@@ -23,7 +23,7 @@ categories = ["parsing", "development-tools::debugging"]
 arwen-core = { path = "crates/arwen-core", version = "0.1.0" }
 arwen-elf = { path = "crates/arwen-elf", version = "0.1.0" }
 arwen-macho = { path = "crates/arwen-macho", version = "0.1.0" }
-arwen-codesign = { path = "crates/arwen-codesign", version = "0.1.0" }
+arwen-codesign = { path = "crates/arwen-codesign", version = "0.0.1-alpha.1" }
 
 # External dependencies
 goblin = { version = "0.10.4", features = ["mach64"] }
