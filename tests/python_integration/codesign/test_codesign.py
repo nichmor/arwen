@@ -19,11 +19,10 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional
 
 import pytest
 
@@ -90,7 +89,9 @@ def get_codesign_info(path: Path) -> dict:
     return info
 
 
-def compare_binaries_bitwise(path1: Path, path2: Path) -> tuple[bool, str, Optional[int]]:
+def compare_binaries_bitwise(
+    path1: Path, path2: Path
+) -> tuple[bool, str, Optional[int]]:
     """Compare two binary files byte-by-byte."""
     data1 = path1.read_bytes()
     data2 = path2.read_bytes()
@@ -128,7 +129,9 @@ def compare_code_signature(path1: Path, path2: Path) -> tuple[bool, str]:
     differences = []
 
     if info1["identifier"] != info2["identifier"]:
-        differences.append(f"identifier: {info1['identifier']} vs {info2['identifier']}")
+        differences.append(
+            f"identifier: {info1['identifier']} vs {info2['identifier']}"
+        )
 
     if info1["adhoc"] != info2["adhoc"]:
         differences.append(f"adhoc: {info1['adhoc']} vs {info2['adhoc']}")
@@ -154,7 +157,11 @@ def verify_signature(path: Path) -> tuple[bool, str]:
         if result.returncode == 0:
             return True, ""
         # codesign outputs errors to stderr
-        error = result.stderr.strip() or result.stdout.strip() or "Unknown verification error"
+        error = (
+            result.stderr.strip()
+            or result.stdout.strip()
+            or "Unknown verification error"
+        )
         return False, error
     except subprocess.TimeoutExpired:
         return False, "Verification timeout"
@@ -162,9 +169,13 @@ def verify_signature(path: Path) -> tuple[bool, str]:
         return False, "codesign not found"
 
 
-def sign_with_apple_codesign(input_path: Path, output_path: Path, identifier: str,
-                             hardened_runtime: bool = False,
-                             preserve_entitlements: bool = False) -> tuple[bool, str]:
+def sign_with_apple_codesign(
+    input_path: Path,
+    output_path: Path,
+    identifier: str,
+    hardened_runtime: bool = False,
+    preserve_entitlements: bool = False,
+) -> tuple[bool, str]:
     """Sign a binary with Apple's codesign tool."""
     shutil.copy(input_path, output_path)
     os.chmod(output_path, 0o755)
@@ -187,9 +198,14 @@ def sign_with_apple_codesign(input_path: Path, output_path: Path, identifier: st
         return False, "codesign not found"
 
 
-def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
-                     identifier: str, hardened_runtime: bool = False,
-                     preserve_entitlements: bool = False) -> tuple[bool, str]:
+def sign_with_goblin(
+    goblin_tool: Path,
+    input_path: Path,
+    output_path: Path,
+    identifier: str,
+    hardened_runtime: bool = False,
+    preserve_entitlements: bool = False,
+) -> tuple[bool, str]:
     """Sign a binary using arwen CLI."""
     shutil.copy(input_path, output_path)
     os.chmod(output_path, 0o755)
@@ -215,7 +231,10 @@ def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode != 0:
-            return False, result.stderr.strip() or result.stdout.strip() or "Unknown error"
+            return (
+                False,
+                result.stderr.strip() or result.stdout.strip() or "Unknown error",
+            )
         return True, ""
     except subprocess.TimeoutExpired:
         return False, "Timeout"
@@ -223,9 +242,15 @@ def sign_with_goblin(goblin_tool: Path, input_path: Path, output_path: Path,
         return False, f"Arwen CLI not found at {goblin_tool}"
 
 
-def _run_adhoc_signing_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
-                             identifier: str, hardened_runtime: bool = False,
-                             verbose: bool = False, strict: bool = False) -> TestCase:
+def _run_adhoc_signing_test(
+    goblin_tool: Path,
+    binary_path: Path,
+    tmpdir: Path,
+    identifier: str,
+    hardened_runtime: bool = False,
+    verbose: bool = False,
+    strict: bool = False,
+) -> TestCase:
     """Test ad-hoc signing comparing Apple and arwen implementations.
 
     Args:
@@ -278,7 +303,7 @@ def _run_adhoc_signing_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
     if match:
         tc.result = TestResult.PASS
         if verbose:
-            print(f"    Bit-for-bit identical!")
+            print("    Bit-for-bit identical!")
     else:
         # Check if signatures are at least structurally equivalent
         struct_match, struct_msg = compare_code_signature(test_file, apple_result)
@@ -290,7 +315,7 @@ def _run_adhoc_signing_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
                 # Non-strict mode: structural match is good enough
                 tc.result = TestResult.PASS
                 if verbose:
-                    print(f"    Structural match (not bit-for-bit)")
+                    print("    Structural match (not bit-for-bit)")
         else:
             tc.result = TestResult.FAIL
             tc.error_message = f"Signature mismatch: {struct_msg}; {msg}"
@@ -298,8 +323,14 @@ def _run_adhoc_signing_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
     return tc
 
 
-def _run_resign_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
-                      identifier: str, verbose: bool = False, strict: bool = False) -> TestCase:
+def _run_resign_test(
+    goblin_tool: Path,
+    binary_path: Path,
+    tmpdir: Path,
+    identifier: str,
+    verbose: bool = False,
+    strict: bool = False,
+) -> TestCase:
     """Test re-signing a linker-signed binary."""
     tc = TestCase(name="resign_linker_signed")
 
@@ -324,7 +355,9 @@ def _run_resign_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
     tc.apple_size = apple_result.stat().st_size
 
     # Sign with goblin tool
-    goblin_ok, goblin_err = sign_with_goblin(goblin_tool, binary_path, test_file, identifier)
+    goblin_ok, goblin_err = sign_with_goblin(
+        goblin_tool, binary_path, test_file, identifier
+    )
     if not goblin_ok:
         tc.result = TestResult.ERROR
         tc.error_message = f"Goblin signing failed: {goblin_err}"
@@ -346,7 +379,7 @@ def _run_resign_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
     if match:
         tc.result = TestResult.PASS
         if verbose:
-            print(f"    Bit-for-bit identical!")
+            print("    Bit-for-bit identical!")
     else:
         # Check if signatures are at least structurally equivalent
         struct_match, struct_msg = compare_code_signature(test_file, apple_result)
@@ -358,7 +391,7 @@ def _run_resign_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
                 # Non-strict mode: structural match is good enough
                 tc.result = TestResult.PASS
                 if verbose:
-                    print(f"    Structural match (not bit-for-bit)")
+                    print("    Structural match (not bit-for-bit)")
         else:
             tc.result = TestResult.FAIL
             tc.error_message = f"Signature mismatch: {struct_msg}; {msg}"
@@ -370,6 +403,7 @@ def _run_resign_test(goblin_tool: Path, binary_path: Path, tmpdir: Path,
 # Test Helper - Creates identifier for binary
 # ============================================================================
 
+
 def get_identifier_for_binary(binary_path: Path) -> str:
     """Get a consistent identifier for a test binary."""
     return f"com.test.{binary_path.stem}"
@@ -379,6 +413,7 @@ def get_identifier_for_binary(binary_path: Path) -> str:
 # Pytest Tests
 # ============================================================================
 # Note: Fixtures and pytest configuration are in conftest.py
+
 
 @pytest.mark.codesign
 @pytest.mark.macos_only

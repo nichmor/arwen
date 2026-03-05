@@ -161,7 +161,7 @@ struct SuperBlob {
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct BlobIndex {
-    typ: u32,
+    typo: u32,
     offset: u32,
 }
 
@@ -209,7 +209,7 @@ impl TryIntoCtx<Endian> for BlobIndex {
 
     fn try_into_ctx(self, dst: &mut [u8], ctx: Endian) -> Result<usize, Self::Error> {
         let offset = &mut 0;
-        dst.gwrite_with(self.typ, offset, ctx)?;
+        dst.gwrite_with(self.typo, offset, ctx)?;
         dst.gwrite_with(self.offset, offset, ctx)?;
         Ok(*offset)
     }
@@ -511,10 +511,7 @@ pub fn extract_entitlements(data: &[u8]) -> Option<Vec<u8>> {
 ///
 /// # Returns
 /// Allocated signature size in bytes (always >= blob_content_size)
-fn calculate_apple_signature_allocation(
-    blob_content_size: usize,
-    n_code_pages: usize,
-) -> usize {
+fn calculate_apple_signature_allocation(blob_content_size: usize, n_code_pages: usize) -> usize {
     // Apple's empirically-derived formula (linear regression from 5-42 page range)
     // Formula: 18259 + (n_pages * 28.1), rounded to 16-byte boundaries
     //
@@ -654,8 +651,7 @@ pub fn generate_adhoc_signature(
     if is_64bit {
         // Update vmsize (offset 32 from segment command start)
         let vmsize_offset = linkedit_cmd_offset + 32;
-        data[vmsize_offset..vmsize_offset + 8]
-            .copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
+        data[vmsize_offset..vmsize_offset + 8].copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
 
         // Update filesize (offset 48 from segment command start)
         let filesize_offset = linkedit_cmd_offset + 48;
@@ -683,14 +679,14 @@ pub fn generate_adhoc_signature(
 
     // Write BlobIndex entries
     let codedir_index = BlobIndex {
-        typ: CSSLOT_CODEDIRECTORY,
+        typo: CSSLOT_CODEDIRECTORY,
         offset: codedir_offset as u32,
     };
     sig.gwrite_with(codedir_index, &mut offset, BE)
         .map_err(|e| error::Error::Malformed(e.to_string()))?;
 
     let requirements_index = BlobIndex {
-        typ: CSSLOT_REQUIREMENTS,
+        typo: CSSLOT_REQUIREMENTS,
         offset: requirements_offset as u32,
     };
     sig.gwrite_with(requirements_index, &mut offset, BE)
@@ -698,7 +694,7 @@ pub fn generate_adhoc_signature(
 
     if has_entitlements {
         let ent_index = BlobIndex {
-            typ: CSSLOT_ENTITLEMENTS,
+            typo: CSSLOT_ENTITLEMENTS,
             offset: entitlements_offset as u32,
         };
         sig.gwrite_with(ent_index, &mut offset, BE)
@@ -706,7 +702,7 @@ pub fn generate_adhoc_signature(
     }
 
     let cms_index = BlobIndex {
-        typ: CSSLOT_SIGNATURESLOT,
+        typo: CSSLOT_SIGNATURESLOT,
         offset: cms_offset as u32,
     };
     sig.gwrite_with(cms_index, &mut offset, BE)
@@ -1295,7 +1291,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     // BlobIndex for CodeDirectory
     let codedir_index = BlobIndex {
-        typ: CSSLOT_CODEDIRECTORY,
+        typo: CSSLOT_CODEDIRECTORY,
         offset: codedir_offset_in_sig as u32,
     };
     sig.gwrite_with(codedir_index, &mut sig_offset, BE)
@@ -1303,7 +1299,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     // BlobIndex for Requirements
     let requirements_index = BlobIndex {
-        typ: CSSLOT_REQUIREMENTS,
+        typo: CSSLOT_REQUIREMENTS,
         offset: requirements_offset_in_sig as u32,
     };
     sig.gwrite_with(requirements_index, &mut sig_offset, BE)
@@ -1312,7 +1308,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
     // BlobIndex for entitlements (if present)
     if has_entitlements {
         let ent_index = BlobIndex {
-            typ: CSSLOT_ENTITLEMENTS,
+            typo: CSSLOT_ENTITLEMENTS,
             offset: entitlements_offset_in_sig as u32,
         };
         sig.gwrite_with(ent_index, &mut sig_offset, BE)
@@ -1321,7 +1317,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     // BlobIndex for CMS Signature
     let cms_index = BlobIndex {
-        typ: CSSLOT_SIGNATURESLOT,
+        typo: CSSLOT_SIGNATURESLOT,
         offset: cms_offset_in_sig as u32,
     };
     sig.gwrite_with(cms_index, &mut sig_offset, BE)
