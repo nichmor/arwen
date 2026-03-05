@@ -4,6 +4,7 @@ members = [
   "crates/arwen-core",
   "crates/arwen-elf",
   "crates/arwen-macho",
+  "crates/arwen-codesign",
   "crates/arwen",
 ]
 exclude = ["py-arwen/*"]
@@ -22,6 +23,7 @@ categories = ["parsing", "development-tools::debugging"]
 arwen-core = { path = "crates/arwen-core", version = "0.1.0" }
 arwen-elf = { path = "crates/arwen-elf", version = "0.1.0" }
 arwen-macho = { path = "crates/arwen-macho", version = "0.1.0" }
+arwen-codesign = { path = "crates/arwen-codesign", version = "0.1.0" }
 
 # External dependencies
 goblin = { version = "0.10.4", features = ["mach64"] }
@@ -29,6 +31,7 @@ object = { version = "0.38.1", features = ["write", "build"] }
 clap = { version = "4.5.26", features = ["derive"] }
 scroll = "0.13.0"
 thiserror = "2.0.11"
+sha2 = "0.10"
 
 # Dev dependencies
 insta = "1.42.0"

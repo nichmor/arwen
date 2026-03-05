@@ -1,0 +1,20 @@
+[package]
+name = "arwen-codesign"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Ad-hoc code signing for Mach-O binaries"
+keywords = ["macho", "codesign", "signing", "darwin", "binary"]
+
+[dependencies]
+goblin = { workspace = true }
+scroll = { workspace = true }
+sha2 = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+rstest = { workspace = true }

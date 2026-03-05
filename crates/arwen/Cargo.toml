@@ -19,6 +19,7 @@ path = "src/main.rs"
 arwen-core = { workspace = true }
 arwen-elf = { workspace = true }
 arwen-macho = { workspace = true }
+arwen-codesign = { workspace = true }
 clap = { workspace = true }
 thiserror = { workspace = true }
 

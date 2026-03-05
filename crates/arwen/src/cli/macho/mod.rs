@@ -1,5 +1,6 @@
 pub mod add;
 pub mod change;
+pub mod codesign;
 pub mod delete;
 pub mod install_id;
 pub mod install_name;
@@ -14,5 +15,6 @@ pub fn execute(macho: MachoCommand) -> Result<(), MachoError> {
         MachoCommand::AddRpath(args) => add::execute(args),
         MachoCommand::ChangeInstallName(args) => install_name::execute(args),
         MachoCommand::ChangeInstallId(args) => install_id::execute(args),
+        MachoCommand::AdhocSign(args) => codesign::execute(args),
     }
 }

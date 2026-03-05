@@ -22,6 +22,7 @@ pub enum MachoCommand {
     AddRpath(macho::add::Args),
     ChangeInstallName(macho::install_name::Args),
     ChangeInstallId(macho::install_id::Args),
+    AdhocSign(macho::codesign::Args),
 }
 
 #[derive(Debug, Parser)]
