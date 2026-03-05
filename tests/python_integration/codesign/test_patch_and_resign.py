@@ -20,10 +20,16 @@ from pathlib import Path
 import pytest
 
 CONDA_REPACKAGED_DIR = (
-    Path(__file__).parent.parent.parent / "data" / "macho" / "codesign" / "conda-repackaged"
+    Path(__file__).parent.parent.parent
+    / "data"
+    / "macho"
+    / "codesign"
+    / "conda-repackaged"
 )
 
-BINARIES = sorted(CONDA_REPACKAGED_DIR.glob("*")) if CONDA_REPACKAGED_DIR.exists() else []
+BINARIES = (
+    sorted(CONDA_REPACKAGED_DIR.glob("*")) if CONDA_REPACKAGED_DIR.exists() else []
+)
 
 
 def find_patchable_string(data: bytes, min_length: int = 32) -> tuple[int, int] | None:
@@ -74,10 +80,19 @@ def codesign_verify(path: Path) -> bool:
     return result.returncode == 0
 
 
-def arwen_adhoc_sign(arwen_bin: Path, target: Path, identifier: str) -> subprocess.CompletedProcess:
+def arwen_adhoc_sign(
+    arwen_bin: Path, target: Path, identifier: str
+) -> subprocess.CompletedProcess:
     """Run arwen macho adhoc-sign on a binary."""
     return subprocess.run(
-        [str(arwen_bin), "macho", "adhoc-sign", "--identifier", identifier, str(target)],
+        [
+            str(arwen_bin),
+            "macho",
+            "adhoc-sign",
+            "--identifier",
+            identifier,
+            str(target),
+        ],
         capture_output=True,
         text=True,
         timeout=30,
@@ -113,7 +128,9 @@ def test_patch_and_resign(arwen_bin: Path, binary_path: Path, tmp_path: Path):
     os.chmod(work, 0o755)
 
     # Verify the original is validly signed
-    assert codesign_verify(work), f"Original binary {binary_path.name} has invalid signature"
+    assert codesign_verify(work), (
+        f"Original binary {binary_path.name} has invalid signature"
+    )
 
     # Patch the binary to break the signature
     patched = patch_binary(work)

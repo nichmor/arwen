@@ -77,7 +77,6 @@ def get_codesign_info(path: Path) -> dict:
             elif line.startswith("CodeDirectory"):
                 if "flags=0x" in line:
                     # Parse flags
-                    flags_part = line.split("flags=")[1].split()[0]
                     if "adhoc" in line.lower():
                         info["adhoc"] = True
                     if "linker-signed" in line.lower() or "linkerSigned" in line:
