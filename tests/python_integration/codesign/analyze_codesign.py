@@ -172,10 +172,8 @@ def find_code_signature(data: bytes) -> tuple[int, int]:
     magic = struct.unpack("<I", data[0:4])[0]
 
     if magic == MH_MAGIC_64 or magic == MH_CIGAM_64:
-        is_64 = True
         header_size = 32
     elif magic == MH_MAGIC or magic == MH_CIGAM:
-        is_64 = False
         header_size = 28
     elif magic == FAT_MAGIC or magic == FAT_CIGAM:
         # Fat binary - just use the first slice for analysis
