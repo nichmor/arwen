@@ -262,14 +262,24 @@ struct MachOLoadInfo {
     linkedit_cmd_offset: Option<usize>,
     /// File offset of __LINKEDIT segment
     linkedit_fileoff: u64,
+    /// File size of __LINKEDIT segment
+    linkedit_filesize: u64,
     /// File offset of __TEXT segment
     text_fileoff: u64,
     /// File size of __TEXT segment
     text_filesize: u64,
+    /// Offset of first section data (for header padding check)
+    first_section_offset: usize,
     /// Whether this is a 64-bit binary
     is_64bit: bool,
     /// Whether this is a main executable (MH_EXECUTE)
     is_executable: bool,
+    /// Offset where load commands end (for inserting new commands)
+    load_commands_end_offset: usize,
+    /// Number of load commands
+    ncmds: usize,
+    /// Size of all load commands
+    sizeofcmds: usize,
 }
 
 /// Parse Mach-O load commands and extract code signing related information
@@ -283,6 +293,10 @@ fn parse_macho_load_info(data: &[u8]) -> error::Result<MachOLoadInfo> {
     let mut info = MachOLoadInfo {
         is_64bit,
         is_executable: header.filetype == 2, // MH_EXECUTE
+        ncmds: header.ncmds,
+        sizeofcmds: header.sizeofcmds as usize,
+        // Will track minimum
+        first_section_offset: usize::MAX,
         ..Default::default()
     };
 
@@ -299,10 +313,13 @@ fn parse_macho_load_info(data: &[u8]) -> error::Result<MachOLoadInfo> {
             }
             LC_SEGMENT_64 => {
                 let segname = parse_segment_name(&data[offset + 8..offset + 24]);
+                let nsects: u32 = data.pread_with(offset + 64, ctx.le)?;
+
                 match segname {
                     "__LINKEDIT" => {
                         info.linkedit_cmd_offset = Some(offset);
                         info.linkedit_fileoff = data.pread_with(offset + 40, ctx.le)?;
+                        info.linkedit_filesize = data.pread_with(offset + 48, ctx.le)?;
                     }
                     "__TEXT" => {
                         info.text_fileoff = data.pread_with(offset + 40, ctx.le)?;
@@ -310,13 +327,30 @@ fn parse_macho_load_info(data: &[u8]) -> error::Result<MachOLoadInfo> {
                     }
                     _ => {}
                 }
+
+                // Parse sections to find first section offset
+                // Section64 is 80 bytes, starts after segment_command_64 (72 bytes)
+                let sections_start = offset + 72;
+                for i in 0..nsects as usize {
+                    let sect_offset = sections_start + i * 80;
+                    let sect_file_offset: u32 = data.pread_with(sect_offset + 48, ctx.le)?;
+                    if sect_file_offset > 0
+                        && (sect_file_offset as usize) < info.first_section_offset
+                    {
+                        info.first_section_offset = sect_file_offset as usize;
+                    }
+                }
             }
             LC_SEGMENT => {
                 let segname = parse_segment_name(&data[offset + 8..offset + 24]);
+                let nsects: u32 = data.pread_with(offset + 48, ctx.le)?;
+
                 match segname {
                     "__LINKEDIT" => {
                         info.linkedit_cmd_offset = Some(offset);
                         info.linkedit_fileoff = data.pread_with::<u32>(offset + 32, ctx.le)? as u64;
+                        info.linkedit_filesize =
+                            data.pread_with::<u32>(offset + 36, ctx.le)? as u64;
                     }
                     "__TEXT" => {
                         info.text_fileoff = data.pread_with::<u32>(offset + 32, ctx.le)? as u64;
@@ -324,11 +358,31 @@ fn parse_macho_load_info(data: &[u8]) -> error::Result<MachOLoadInfo> {
                     }
                     _ => {}
                 }
+
+                // Parse sections to find first section offset
+                // Section is 68 bytes, starts after segment_command (56 bytes)
+                let sections_start = offset + 56;
+                for i in 0..nsects as usize {
+                    let sect_offset = sections_start + i * 68;
+                    let sect_file_offset: u32 = data.pread_with(sect_offset + 40, ctx.le)?;
+                    if sect_file_offset > 0
+                        && (sect_file_offset as usize) < info.first_section_offset
+                    {
+                        info.first_section_offset = sect_file_offset as usize;
+                    }
+                }
             }
             _ => {}
         }
 
         offset += cmdsize as usize;
+    }
+
+    info.load_commands_end_offset = offset;
+
+    // If no sections found, fall back to end of load commands
+    if info.first_section_offset == usize::MAX {
+        info.first_section_offset = info.load_commands_end_offset;
     }
 
     Ok(info)
@@ -339,6 +393,146 @@ fn parse_segment_name(bytes: &[u8]) -> &str {
     core::str::from_utf8(bytes)
         .unwrap_or("")
         .trim_end_matches('\0')
+}
+
+/// Size of LC_CODE_SIGNATURE load command (linkedit_data_command)
+const LC_CODE_SIGNATURE_SIZE: usize = 16;
+
+/// Write a u32 value to a byte slice respecting endianness
+fn write_u32(data: &mut [u8], offset: usize, value: u32, le: scroll::Endian) {
+    let bytes = if le == scroll::Endian::Little {
+        value.to_le_bytes()
+    } else {
+        value.to_be_bytes()
+    };
+    data[offset..offset + 4].copy_from_slice(&bytes);
+}
+
+/// Write a u64 value to a byte slice respecting endianness
+fn write_u64(data: &mut [u8], offset: usize, value: u64, le: scroll::Endian) {
+    let bytes = if le == scroll::Endian::Little {
+        value.to_le_bytes()
+    } else {
+        value.to_be_bytes()
+    };
+    data[offset..offset + 8].copy_from_slice(&bytes);
+}
+
+/// Parameters for inserting LC_CODE_SIGNATURE command
+struct InsertCodeSigParams {
+    /// Size of header
+    header_size: usize,
+    /// Current size of load commands
+    sizeofcmds: usize,
+    /// Current number of load commands
+    ncmds: usize,
+    /// Offset of first section (to check padding space)
+    first_section_offset: usize,
+    /// File offset where code signature data will be placed
+    codesig_data_offset: usize,
+    /// Size of code signature data (0 if unknown, will be updated later)
+    codesig_data_size: usize,
+    /// Endianness of the binary
+    le: scroll::Endian,
+}
+
+/// Insert LC_CODE_SIGNATURE load command into header padding.
+///
+/// This function:
+/// 1. Checks if there's enough padding space after load commands
+/// 2. Writes the LC_CODE_SIGNATURE command into the padding
+/// 3. Updates the header's ncmds and sizeofcmds
+///
+/// # Arguments
+/// * `data` - Mutable byte slice containing at least header + load commands + padding
+/// * `params` - Parameters for insertion
+///
+/// # Returns
+/// The offset where the command was inserted, or an error if not enough space
+fn insert_code_signature_command_into_buffer(
+    data: &mut [u8],
+    params: &InsertCodeSigParams,
+) -> Result<usize, &'static str> {
+    // Check if there's enough padding space after load commands
+    let load_commands_end = params.header_size + params.sizeofcmds;
+
+    if load_commands_end + LC_CODE_SIGNATURE_SIZE > params.first_section_offset {
+        return Err(
+            "Not enough header padding space to insert LC_CODE_SIGNATURE. \
+             Binary may need to be relinked with -headerpad option.",
+        );
+    }
+
+    // Insert the command at the end of existing load commands
+    let insert_offset = load_commands_end;
+
+    // Build and write LC_CODE_SIGNATURE command (linkedit_data_command structure)
+    write_u32(data, insert_offset, LC_CODE_SIGNATURE, params.le);
+    write_u32(
+        data,
+        insert_offset + 4,
+        LC_CODE_SIGNATURE_SIZE as u32,
+        params.le,
+    );
+    write_u32(
+        data,
+        insert_offset + 8,
+        params.codesig_data_offset as u32,
+        params.le,
+    );
+    write_u32(
+        data,
+        insert_offset + 12,
+        params.codesig_data_size as u32,
+        params.le,
+    );
+
+    // Update header: increment ncmds and sizeofcmds
+    // ncmds is at offset 16 for both 32-bit and 64-bit
+    // sizeofcmds is at offset 20 for both 32-bit and 64-bit
+    write_u32(data, 16, (params.ncmds + 1) as u32, params.le);
+    write_u32(
+        data,
+        20,
+        (params.sizeofcmds + LC_CODE_SIGNATURE_SIZE) as u32,
+        params.le,
+    );
+
+    Ok(insert_offset)
+}
+
+/// Insert LC_CODE_SIGNATURE load command into a Mach-O binary that doesn't have one.
+///
+/// This function:
+/// 1. Checks if there's enough padding space after load commands
+/// 2. Inserts the LC_CODE_SIGNATURE command
+/// 3. Updates the header's ncmds and sizeofcmds
+///
+/// Returns the modified data and the offset where the command was inserted.
+fn insert_code_signature_command(
+    mut data: Vec<u8>,
+    info: &MachOLoadInfo,
+    codesig_data_offset: usize,
+    codesig_data_size: usize,
+) -> error::Result<(Vec<u8>, usize)> {
+    let (_, ctx_opt) = parse_magic_and_ctx(&data, 0)?;
+    let ctx = ctx_opt.ok_or(error::Error::Malformed("Invalid Mach-O magic".into()))?;
+    let header_size = Header::size_with(&ctx);
+
+    let params = InsertCodeSigParams {
+        header_size,
+        sizeofcmds: info.sizeofcmds,
+        ncmds: info.ncmds,
+        first_section_offset: info.first_section_offset,
+        codesig_data_offset,
+        codesig_data_size,
+        le: ctx.le,
+    };
+
+    let insert_offset = insert_code_signature_command_into_buffer(&mut data, &params)
+        .map_err(|e| error::Error::Malformed(e.into()))?;
+
+    Ok((data, insert_offset))
 }
 
 // =============================================================================
@@ -567,6 +761,11 @@ pub fn generate_adhoc_signature(
     linker_signed: bool,
     entitlements: Option<&[u8]>,
 ) -> error::Result<Vec<u8>> {
+    // Get the binary's endianness
+    let (_, ctx_opt) = parse_magic_and_ctx(&data, 0)?;
+    let ctx = ctx_opt.ok_or(error::Error::Malformed("Invalid Mach-O magic".into()))?;
+    let le = ctx.le;
+
     // Calculate sizes
     let id_bytes = identifier.as_bytes();
     let id_len = id_bytes.len() + 1; // Include null terminator
@@ -637,9 +836,12 @@ pub fn generate_adhoc_signature(
     };
 
     // Update LC_CODE_SIGNATURE command FIRST (before hashing)
-    let datasize_offset = codesig_cmd_offset + 12;
-    data[datasize_offset..datasize_offset + 4]
-        .copy_from_slice(&(padded_sig_size as u32).to_le_bytes());
+    write_u32(
+        &mut data,
+        codesig_cmd_offset + 12,
+        padded_sig_size as u32,
+        le,
+    );
 
     // Update __LINKEDIT segment filesize and vmsize FIRST (before hashing)
     let new_linkedit_filesize =
@@ -650,23 +852,29 @@ pub fn generate_adhoc_signature(
 
     if is_64bit {
         // Update vmsize (offset 32 from segment command start)
-        let vmsize_offset = linkedit_cmd_offset + 32;
-        data[vmsize_offset..vmsize_offset + 8].copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
-
+        write_u64(&mut data, linkedit_cmd_offset + 32, new_linkedit_vmsize, le);
         // Update filesize (offset 48 from segment command start)
-        let filesize_offset = linkedit_cmd_offset + 48;
-        data[filesize_offset..filesize_offset + 8]
-            .copy_from_slice(&new_linkedit_filesize.to_le_bytes());
+        write_u64(
+            &mut data,
+            linkedit_cmd_offset + 48,
+            new_linkedit_filesize,
+            le,
+        );
     } else {
         // Update vmsize (offset 24 from segment command start for 32-bit)
-        let vmsize_offset = linkedit_cmd_offset + 24;
-        data[vmsize_offset..vmsize_offset + 4]
-            .copy_from_slice(&(new_linkedit_vmsize as u32).to_le_bytes());
-
+        write_u32(
+            &mut data,
+            linkedit_cmd_offset + 24,
+            new_linkedit_vmsize as u32,
+            le,
+        );
         // Update filesize (offset 36 from segment command start for 32-bit)
-        let filesize_offset = linkedit_cmd_offset + 36;
-        data[filesize_offset..filesize_offset + 4]
-            .copy_from_slice(&(new_linkedit_filesize as u32).to_le_bytes());
+        write_u32(
+            &mut data,
+            linkedit_cmd_offset + 36,
+            new_linkedit_filesize as u32,
+            le,
+        );
     }
 
     // Build signature blob content - pre-allocate and use gwrite_with
@@ -897,18 +1105,34 @@ pub fn adhoc_sign(data: Vec<u8>, options: &AdhocSignOptions) -> error::Result<Ve
     // Parse load commands
     let info = parse_macho_load_info(&data)?;
 
-    let codesig_cmd_offset = info
-        .codesig_cmd_offset
-        .ok_or_else(|| error::Error::Malformed("No LC_CODE_SIGNATURE found".into()))?;
     let linkedit_cmd_offset = info
         .linkedit_cmd_offset
         .ok_or_else(|| error::Error::Malformed("No __LINKEDIT segment found".into()))?;
+
+    // Handle unsigned binaries by inserting LC_CODE_SIGNATURE
+    let (data, codesig_cmd_offset, codesig_data_offset) =
+        if let Some(offset) = info.codesig_cmd_offset {
+            // Binary already has LC_CODE_SIGNATURE
+            (data, offset, info.codesig_data_offset)
+        } else {
+            // Binary is unsigned - need to insert LC_CODE_SIGNATURE
+            // Signature data goes at the end of __LINKEDIT (which is end of file for unsigned binaries)
+            let codesig_data_offset = (info.linkedit_fileoff + info.linkedit_filesize) as usize;
+
+            // We need to estimate the signature size first to insert the command
+            // The actual size will be calculated and updated by generate_adhoc_signature
+            // For now, use 0 as placeholder - it will be updated during signature generation
+            let (data, cmd_offset) =
+                insert_code_signature_command(data, &info, codesig_data_offset, 0)?;
+
+            (data, cmd_offset, codesig_data_offset)
+        };
 
     generate_adhoc_signature(
         data,
         options.identifier,
         codesig_cmd_offset,
-        info.codesig_data_offset,
+        codesig_data_offset,
         linkedit_cmd_offset,
         info.linkedit_fileoff,
         info.text_fileoff,
@@ -1057,18 +1281,56 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
         offset += cmdsize as usize;
     }
 
-    let codesig_cmd_offset = codesig_cmd_offset.ok_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "No LC_CODE_SIGNATURE found",
-        )
-    })?;
     let linkedit_cmd_offset = linkedit_cmd_offset.ok_or_else(|| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "No __LINKEDIT segment found",
         )
     })?;
+
+    // Handle unsigned binaries by inserting LC_CODE_SIGNATURE
+    let (mut header_and_cmds, codesig_cmd_offset, codesig_data_offset) =
+        if let Some(cmd_offset) = codesig_cmd_offset {
+            // Binary already has LC_CODE_SIGNATURE
+            (header_and_cmds, cmd_offset, codesig_data_offset)
+        } else {
+            // Binary is unsigned - need to insert LC_CODE_SIGNATURE
+            // Calculate where signature data will go (end of __LINKEDIT = end of file)
+            let linkedit_filesize: u64 = if is_64bit {
+                header_and_cmds
+                    .pread_with(linkedit_cmd_offset + 48, ctx.le)
+                    .map_err(scroll_to_io_error)?
+            } else {
+                header_and_cmds
+                    .pread_with::<u32>(linkedit_cmd_offset + 36, ctx.le)
+                    .map_err(scroll_to_io_error)? as u64
+            };
+            let new_codesig_data_offset = (linkedit_fileoff + linkedit_filesize) as usize;
+
+            // We need to re-read the full area including padding to modify it
+            reader.seek(SeekFrom::Start(0))?;
+            let new_header_and_cmds_size =
+                header_size + header.sizeofcmds as usize + LC_CODE_SIGNATURE_SIZE;
+            let mut new_header_and_cmds = vec![0u8; new_header_and_cmds_size];
+            reader.read_exact(&mut new_header_and_cmds)?;
+
+            // Use shared helper to insert the command
+            let params = InsertCodeSigParams {
+                header_size,
+                sizeofcmds: header.sizeofcmds as usize,
+                ncmds: header.ncmds as usize,
+                first_section_offset: text_fileoff as usize,
+                codesig_data_offset: new_codesig_data_offset,
+                codesig_data_size: 0, // Will be updated later
+                le: ctx.le,
+            };
+
+            let insert_offset =
+                insert_code_signature_command_into_buffer(&mut new_header_and_cmds, &params)
+                    .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+
+            (new_header_and_cmds, insert_offset, new_codesig_data_offset)
+        };
 
     // Extract existing entitlements if preserving
     let entitlements: Option<Vec<u8>> = match &options.entitlements {
@@ -1137,9 +1399,12 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     // Update the header+cmds buffer with new values
     // Update LC_CODE_SIGNATURE datasize
-    let datasize_offset = codesig_cmd_offset + 12;
-    header_and_cmds[datasize_offset..datasize_offset + 4]
-        .copy_from_slice(&(padded_sig_size as u32).to_le_bytes());
+    write_u32(
+        &mut header_and_cmds,
+        codesig_cmd_offset + 12,
+        padded_sig_size as u32,
+        ctx.le,
+    );
 
     // Update __LINKEDIT segment filesize and vmsize
     let new_linkedit_filesize =
@@ -1150,24 +1415,34 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
 
     if is_64bit {
         // Update vmsize (offset 32 from segment command start)
-        let vmsize_offset = linkedit_cmd_offset + 32;
-        header_and_cmds[vmsize_offset..vmsize_offset + 8]
-            .copy_from_slice(&new_linkedit_vmsize.to_le_bytes());
-
+        write_u64(
+            &mut header_and_cmds,
+            linkedit_cmd_offset + 32,
+            new_linkedit_vmsize,
+            ctx.le,
+        );
         // Update filesize (offset 48 from segment command start)
-        let filesize_offset = linkedit_cmd_offset + 48;
-        header_and_cmds[filesize_offset..filesize_offset + 8]
-            .copy_from_slice(&new_linkedit_filesize.to_le_bytes());
+        write_u64(
+            &mut header_and_cmds,
+            linkedit_cmd_offset + 48,
+            new_linkedit_filesize,
+            ctx.le,
+        );
     } else {
         // Update vmsize (offset 24 from segment command start for 32-bit)
-        let vmsize_offset = linkedit_cmd_offset + 24;
-        header_and_cmds[vmsize_offset..vmsize_offset + 4]
-            .copy_from_slice(&(new_linkedit_vmsize as u32).to_le_bytes());
-
+        write_u32(
+            &mut header_and_cmds,
+            linkedit_cmd_offset + 24,
+            new_linkedit_vmsize as u32,
+            ctx.le,
+        );
         // Update filesize (offset 36 from segment command start for 32-bit)
-        let filesize_offset = linkedit_cmd_offset + 36;
-        header_and_cmds[filesize_offset..filesize_offset + 4]
-            .copy_from_slice(&(new_linkedit_filesize as u32).to_le_bytes());
+        write_u32(
+            &mut header_and_cmds,
+            linkedit_cmd_offset + 36,
+            new_linkedit_filesize as u32,
+            ctx.le,
+        );
     }
 
     // Create temp file in the same directory for atomic rename
@@ -1176,6 +1451,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
     let mut writer = BufWriter::new(&mut temp_file);
 
     // Write modified header + load commands
+    let header_and_cmds_size = header_and_cmds.len();
     writer.write_all(&header_and_cmds)?;
 
     // Stream copy the rest of the binary up to code signature, computing hashes
@@ -1492,5 +1768,39 @@ mod tests {
     fn test_superblob_iter_too_short() {
         let data = [0xFA, 0xDE, 0x0C, 0xC0]; // Just the magic, too short
         assert!(iter_superblob(&data).is_none());
+    }
+
+    #[test]
+    fn test_sign_unsigned_binary() {
+        // Read an unsigned test binary
+        let data = std::fs::read("../../tests/data/macho/codesign/test_exe_unsigned").unwrap();
+
+        // Verify it doesn't have LC_CODE_SIGNATURE
+        let info = parse_macho_load_info(&data).unwrap();
+        assert!(
+            info.codesig_cmd_offset.is_none(),
+            "Binary should not have LC_CODE_SIGNATURE"
+        );
+
+        // Sign it
+        let options = AdhocSignOptions::new("com.test.unsigned");
+        let signed = adhoc_sign(data.clone(), &options).expect("Signing should succeed");
+
+        // Verify the signed binary has LC_CODE_SIGNATURE
+        let signed_info = parse_macho_load_info(&signed).unwrap();
+        assert!(
+            signed_info.codesig_cmd_offset.is_some(),
+            "Signed binary should have LC_CODE_SIGNATURE"
+        );
+
+        // Verify the signed binary is larger (has signature appended)
+        assert!(signed.len() > data.len(), "Signed binary should be larger");
+
+        // Verify ncmds increased by 1
+        assert_eq!(
+            signed_info.ncmds,
+            info.ncmds + 1,
+            "Signed binary should have one more load command"
+        );
     }
 }
