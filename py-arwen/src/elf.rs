@@ -142,7 +142,7 @@ impl PyElfContainer {
     /// Get the OS ABI from the ELF file
     #[pyo3(text_signature = "($self)")]
     fn get_os_abi(&mut self) -> PyResult<u8> {
-        Ok(self.inner.inner.header().os_abi)
+        Ok(self.inner.inner.header().os_abi.0)
     }
 
     /// Set the SONAME of the ELF file
@@ -198,7 +198,7 @@ impl PyElfContainer {
             .inner
             .inner
             .elf_gnu_exec_stack()
-            .map(|flag| (flag & object::elf::PF_X) == object::elf::PF_X);
+            .map(|flag| (flag & object::elf::PF_X.0) == object::elf::PF_X.0);
         Ok(result)
     }
 

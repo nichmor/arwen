@@ -13,7 +13,7 @@ pyo3 = { version = "0.23.3", features = ["extension-module", "abi3-py38"] }
 arwen-elf = { path = "../crates/arwen-elf" }
 arwen-macho = { path = "../crates/arwen-macho" }
 thiserror = "2.0.11"
-object = { version = "0.38.1", features = ["write", "build"] }
+object = { version = "0.40.0", default-features = false, features = ["build", "std"] }
 
 # Prevent package from thinking it's in the workspace
 [workspace]

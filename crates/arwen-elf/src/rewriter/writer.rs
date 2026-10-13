@@ -558,13 +558,13 @@ impl<'data> Writer<'data> {
                 continue;
             }
 
-            *val |= elf::DF_1_NODEFLIB as u64;
+            *val |= elf::DF_1_NODEFLIB.0;
             found = true;
         }
         if !found {
             dynamic.push(build::elf::Dynamic::Integer {
                 tag: elf::DT_FLAGS_1,
-                val: elf::DF_1_NODEFLIB as u64,
+                val: elf::DF_1_NODEFLIB.0,
             });
         }
         self.modified = true;
@@ -601,7 +601,7 @@ impl<'data> Writer<'data> {
             self.builder.add_gnu_stack()
         };
 
-        gnu_stack.p_flags &= !elf::PF_X;
+        gnu_stack.p_flags.remove(elf::PF_X);
 
         self.modified = true;
 
@@ -630,7 +630,7 @@ impl<'data> Writer<'data> {
     pub fn elf_gnu_exec_stack(&self) -> Option<u32> {
         let gnu_stack = self.builder.gnu_stack();
         if let Some(segment) = gnu_stack {
-            return Some(segment.p_flags);
+            return Some(segment.p_flags.0);
         }
         None
     }

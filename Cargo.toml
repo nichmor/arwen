@@ -27,7 +27,7 @@ arwen-codesign = { path = "crates/arwen-codesign", version = "0.0.1-alpha.1" }
 
 # External dependencies
 goblin = { version = "0.10.4", features = ["mach64"] }
-object = { version = "0.38.1", features = ["write", "build"] }
+object = { version = "0.40.0", default-features = false, features = ["build", "std"] }
 clap = { version = "4.5.26", features = ["derive"] }
 scroll = "0.13.0"
 thiserror = "2.0.11"

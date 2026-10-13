@@ -201,7 +201,7 @@ impl<'a> ElfContainer<'a> {
     /// Print the executable stack execution permission.
     pub fn print_exec_stack(&mut self) {
         if let Some(exec_flag) = self.inner.elf_gnu_exec_stack() {
-            if exec_flag & elf::PF_X == elf::PF_X {
+            if exec_flag & elf::PF_X.0 == elf::PF_X.0 {
                 println!("X");
             } else {
                 println!("-");
