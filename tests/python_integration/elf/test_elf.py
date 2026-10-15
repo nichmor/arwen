@@ -106,17 +106,27 @@ def test_remove_rpath(bin_for_arwen, bin_for_patchelf):
 
 
 def test_set_soname(bin_for_arwen, bin_for_patchelf):
-    """Test --set-soname functionality."""
+    """Test --set-soname functionality.
+
+    The fixtures are executables (ET_EXEC), which have no soname: patchelf
+    silently leaves them unchanged, arwen refuses and leaves them unchanged.
+    """
     new_soname = "libfoo_patched.so.1"
+    with open(bin_for_arwen, "rb") as f:
+        original = f.read()
 
     run_command(["patchelf", "--set-soname", new_soname, bin_for_patchelf])
-    run_command(["arwen", "elf", "set-soname", new_soname, bin_for_arwen])
+    _, _, returncode = run_command(
+        ["arwen", "elf", "set-soname", new_soname, bin_for_arwen], check=False
+    )
+    assert returncode != 0, "arwen set a soname on an executable"
+    with open(bin_for_arwen, "rb") as f:
+        assert f.read() == original, "arwen changed the file although it failed"
 
     patchelf_out, _, _ = run_command(["patchelf", "--print-soname", bin_for_patchelf])
     arwen_out, _, _ = run_command(["patchelf", "--print-soname", bin_for_arwen])
 
     assert patchelf_out == arwen_out, "Set SONAME doesn't match"
-    # assert patchelf_out == new_soname, "Patchelf didn't set SONAME correctly"
 
 
 # def test_print_needed(test_files):

@@ -16,7 +16,7 @@ pub struct ElfContainer<'a> {
 }
 
 impl<'a> ElfContainer<'a> {
-    /// Parse the given bytes and return a new `MachoContainer`.
+    /// Parse the given bytes and return a new `ElfContainer`.
     pub fn parse(bytes_of_file: &'a [u8]) -> Result<Self, ElfError> {
         let rewriter = Writer::read(bytes_of_file)?;
         Ok(Self {
@@ -47,11 +47,17 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
-    /// Print the DT_RUNPATH.
-    pub fn print_runpath(&mut self) {
-        if let Some(runpath) = self.inner.elf_runpath() {
-            println!("{}", String::from_utf8_lossy(runpath));
+    /// Print the DT_RUNPATH, or the DT_RPATH if there is no DT_RUNPATH.
+    ///
+    /// Prints an empty line if there is none, and fails if the file has no
+    /// dynamic section.
+    pub fn print_runpath(&mut self) -> Result<(), ElfError> {
+        if self.inner.builder().dynamic_data().is_none() {
+            return Err(ElfError::MissingSection(".dynamic"));
         }
+        let runpath = self.inner.elf_runpath().unwrap_or_default();
+        println!("{}", String::from_utf8_lossy(runpath));
+        Ok(())
     }
 
     /// Get the RPATH/RUNPATH entries as a list of paths.
@@ -84,10 +90,15 @@ impl<'a> ElfContainer<'a> {
     }
 
     /// Print the PT_INTERPRETER program header.
-    pub fn print_interpreter(&mut self) {
-        if let Some(interp) = self.inner.elf_interpreter() {
-            println!("{}", String::from_utf8_lossy(interp));
-        }
+    ///
+    /// Fails if the file has no interpreter.
+    pub fn print_interpreter(&mut self) -> Result<(), ElfError> {
+        let interp = self
+            .inner
+            .elf_interpreter()
+            .ok_or(ElfError::MissingSection(".interp"))?;
+        println!("{}", String::from_utf8_lossy(interp));
+        Ok(())
     }
 
     /// Set the OS ABI in the ELF file.
@@ -99,7 +110,7 @@ impl<'a> ElfContainer<'a> {
 
     /// Print the OS ABI in the ELF file.
     pub fn print_os_abi(&mut self) {
-        println!("{}", self.inner.header().os_abi);
+        println!("{}", os_abi_name(self.inner.header().os_abi));
     }
 
     /// Set the SONAME of DT_SONAME.
@@ -198,15 +209,16 @@ impl<'a> ElfContainer<'a> {
         Ok(())
     }
 
-    /// Print the executable stack execution permission.
+    /// Print the executable stack execution permission:
+    /// `execstack: X` if executable, `execstack: -` if not, and
+    /// `execstack: ?` if there is no `PT_GNU_STACK` segment.
     pub fn print_exec_stack(&mut self) {
-        if let Some(exec_flag) = self.inner.elf_gnu_exec_stack() {
-            if exec_flag & elf::PF_X == elf::PF_X {
-                println!("X");
-            } else {
-                println!("-");
-            }
-        }
+        let state = match self.inner.elf_gnu_exec_stack() {
+            Some(flags) if flags & elf::PF_X == elf::PF_X => 'X',
+            Some(_) => '-',
+            None => '?',
+        };
+        println!("execstack: {state}");
     }
 
     /// Rename dynamic symbols in the ELF file.
@@ -241,6 +253,25 @@ impl<'a> ElfContainer<'a> {
         self.inner.write(w)?;
         Ok(())
     }
+}
+
+pub fn os_abi_name(os_abi: u8) -> String {
+    let name = match os_abi {
+        elf::ELFOSABI_SYSV => "System V",
+        elf::ELFOSABI_HPUX => "HP-UX",
+        elf::ELFOSABI_NETBSD => "NetBSD",
+        elf::ELFOSABI_LINUX => "Linux",
+        elf::ELFOSABI_HURD => "GNU Hurd",
+        elf::ELFOSABI_SOLARIS => "Solaris",
+        elf::ELFOSABI_AIX => "AIX",
+        elf::ELFOSABI_IRIX => "IRIX",
+        elf::ELFOSABI_FREEBSD => "FreeBSD",
+        elf::ELFOSABI_TRU64 => "Tru64",
+        elf::ELFOSABI_OPENBSD => "OpenBSD",
+        elf::ELFOSABI_OPENVMS => "OpenVMS",
+        _ => return format!("0x{os_abi:02X}"),
+    };
+    name.to_string()
 }
 
 fn transform_map(

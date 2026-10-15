@@ -79,8 +79,8 @@ expression: changed_elf.program_headers
         p_offset: 0x1c0f8,
         p_vaddr: 0x41a0f8,
         p_paddr: 0x41a0f8,
-        p_filesz: 0x1d0,
-        p_memsz: 0x1d0,
+        p_filesz: 0x180,
+        p_memsz: 0x180,
         p_align: 8,
     },
     ProgramHeader {

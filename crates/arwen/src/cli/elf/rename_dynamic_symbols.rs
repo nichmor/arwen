@@ -24,21 +24,13 @@ pub struct Args {
 }
 
 pub fn execute(args: Args) -> Result<(), arwen_elf::ElfError> {
-    let bytes_of_file = std::fs::read(&args.path_to_binary).unwrap();
+    super::patch(&args.path_to_binary, |elf| {
+        let mut rename_symbols = HashMap::new();
+        for (key, value) in args.rename_symbols {
+            rename_symbols.insert(key, value);
+        }
 
-    let mut elf = arwen_elf::ElfContainer::parse(&bytes_of_file)?;
-
-    let mut rename_symbols = HashMap::new();
-    for (key, value) in args.rename_symbols {
-        rename_symbols.insert(key, value);
-    }
-
-    elf.rename_dynamic_symbols(&rename_symbols)?;
-
-    let output_file =
-        std::fs::File::create(format!("{}", args.path_to_binary.to_string_lossy())).unwrap();
-
-    elf.write(&output_file)?;
-
-    Ok(())
+        elf.rename_dynamic_symbols(&rename_symbols)?;
+        Ok(())
+    })
 }

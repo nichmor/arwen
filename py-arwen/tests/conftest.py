@@ -23,6 +23,17 @@ def elf_bin(tmp_files):
 
 
 @pytest.fixture
+def elf_lib(tmp_files):
+    current_dir = Path(__file__).parent
+
+    libfoo = current_dir / "data" / "linux-x64-libfoo"
+
+    test_lib = Path(tmp_files) / "libfoo.so"
+    shutil.copy2(libfoo, test_lib)
+    return str(test_lib)
+
+
+@pytest.fixture
 def macho_bin(tmp_files):
     current_dir = Path(__file__).parent
 

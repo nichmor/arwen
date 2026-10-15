@@ -33,7 +33,14 @@ struct Block<'a> {
 pub(crate) fn move_sections(builder: &mut build::elf::Builder) -> Result<()> {
     builder.delete_orphans();
     builder.delete_unused_versions();
+
+    let old_sizes: Vec<_> = builder
+        .sections
+        .iter()
+        .map(|section| (section.id(), section.sh_size))
+        .collect();
     builder.set_section_sizes();
+    recalculate_resized_segments(builder, &old_sizes);
 
     let mut added_p_flags = Vec::new();
     let mut added_segments = 0;
@@ -167,6 +174,67 @@ pub(crate) fn move_sections(builder: &mut build::elf::Builder) -> Result<()> {
             segment.p_memsz = size;
         }
         return Ok(());
+    }
+}
+
+/// Update the ranges of non-`PT_LOAD` segments containing a section whose size changed.
+///
+/// A section that changes size but still fits at its address is not moved, so the
+/// segments containing it would otherwise keep their old size. For `PT_INTERP` this
+/// breaks loading: the kernel reads exactly `p_filesz` bytes and requires the last
+/// one to be the NUL terminator.
+///
+/// `PT_INTERP` and `PT_DYNAMIC` describe exactly one section, so they are set to
+/// that section's range. Any other segment is only grown to cover its sections and
+/// never shrunk: linkers pad some ranges deliberately, e.g. `PT_GNU_RELRO` is rounded
+/// up to a page boundary so that the loader, which rounds the end down, protects the
+/// last page. `PT_LOAD` segments are never resized here, see `move_sections`.
+fn recalculate_resized_segments(
+    builder: &mut build::elf::Builder,
+    old_sizes: &[(build::elf::SectionId, u64)],
+) {
+    let sections = &builder.sections;
+    let resized: Vec<_> = old_sizes
+        .iter()
+        .filter(|(id, old_size)| sections.get(*id).sh_size != *old_size)
+        .map(|(id, _)| *id)
+        .collect();
+    if resized.is_empty() {
+        return;
+    }
+    for segment in &mut builder.segments {
+        if segment.p_type == elf::PT_LOAD {
+            continue;
+        }
+        if !segment.sections.iter().any(|id| resized.contains(id)) {
+            continue;
+        }
+        if matches!(segment.p_type, elf::PT_INTERP | elf::PT_DYNAMIC) {
+            segment.recalculate_ranges(sections);
+            continue;
+        }
+
+        // Use the union of the old range and the range covering the sections.
+        let old = (
+            segment.p_offset,
+            segment.p_filesz,
+            segment.p_vaddr,
+            segment.p_paddr,
+            segment.p_memsz,
+        );
+        segment.recalculate_ranges(sections);
+        let (old_offset, old_filesz, old_vaddr, old_paddr, old_memsz) = old;
+
+        let file_end = (old_offset + old_filesz).max(segment.p_offset + segment.p_filesz);
+        segment.p_offset = segment.p_offset.min(old_offset);
+        segment.p_filesz = file_end - segment.p_offset;
+
+        let mem_end = (old_vaddr + old_memsz).max(segment.p_vaddr + segment.p_memsz);
+        if old_vaddr <= segment.p_vaddr {
+            segment.p_vaddr = old_vaddr;
+            segment.p_paddr = old_paddr;
+        }
+        segment.p_memsz = mem_end - segment.p_vaddr;
     }
 }
 
