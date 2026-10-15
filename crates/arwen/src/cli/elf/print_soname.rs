@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-/// Print the `DT_SONAME`
+/// Print the `DT_SONAME` of a shared library
 #[derive(Parser, Debug)]
 pub struct Args {
     /// Path to the file to change

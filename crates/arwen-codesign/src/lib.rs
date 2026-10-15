@@ -1318,7 +1318,7 @@ pub fn adhoc_sign_file(path: &std::path::Path, options: &AdhocSignOptions) -> st
             let params = InsertCodeSigParams {
                 header_size,
                 sizeofcmds: header.sizeofcmds as usize,
-                ncmds: header.ncmds as usize,
+                ncmds: header.ncmds,
                 first_section_offset: text_fileoff as usize,
                 codesig_data_offset: new_codesig_data_offset,
                 codesig_data_size: 0, // Will be updated later

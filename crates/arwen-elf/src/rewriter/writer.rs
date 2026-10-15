@@ -131,19 +131,19 @@ impl<'data> Writer<'data> {
         Ok(())
     }
 
-    /// Find the first `DT_RUNPATH` or `DT_RPATH` entry in the dynamic section.
+    /// Find the search path the dynamic loader uses: the first `DT_RUNPATH` entry,
+    /// or the first `DT_RPATH` entry if there is no `DT_RUNPATH`.
+    ///
+    /// The loader ignores `DT_RPATH` when `DT_RUNPATH` is present.
     pub fn elf_runpath(&self) -> Option<&[u8]> {
         let dynamic = self.builder.dynamic_data()?;
-        for entry in dynamic.iter() {
-            let build::elf::Dynamic::String { tag, val } = entry else {
-                continue;
-            };
-            if *tag != elf::DT_RPATH && *tag != elf::DT_RUNPATH {
-                continue;
-            }
-            return Some(val);
-        }
-        None
+        let find = |wanted| {
+            dynamic.iter().find_map(|entry| match entry {
+                build::elf::Dynamic::String { tag, val } if *tag == wanted => Some(val.as_slice()),
+                _ => None,
+            })
+        };
+        find(elf::DT_RUNPATH).or_else(|| find(elf::DT_RPATH))
     }
 
     /// Delete any `DT_RUNPATH` or `DT_RPATH` entries in the dynamic section.
@@ -168,10 +168,13 @@ impl<'data> Writer<'data> {
     }
 
     /// Set the path for any `DT_RUNPATH` or `DT_RPATH` entry in the dynamic section.
+    ///
+    /// A `DT_RPATH` becomes a `DT_RUNPATH` unless the file has both.
     pub fn elf_set_runpath(&mut self, runpath: Vec<u8>) -> Result<()> {
         let dynamic = self.builder.dynamic_data_mut().ok_or_else(|| {
             ElfError::Modify("No dynamic section found; can't set runpath".to_string())
         })?;
+        prefer_runpath(dynamic);
         let mut found = false;
         for entry in dynamic.iter_mut() {
             let build::elf::Dynamic::String { tag, val } = entry else {
@@ -196,10 +199,13 @@ impl<'data> Writer<'data> {
     }
 
     /// Add additional paths to any `DT_RUNPATH` or `DT_RPATH` entry in the dynamic section.
+    ///
+    /// A `DT_RPATH` becomes a `DT_RUNPATH` unless the file has both.
     pub fn elf_add_runpath(&mut self, runpaths: &[Vec<u8>]) -> Result<()> {
         let dynamic = self.builder.dynamic_data_mut().ok_or_else(|| {
             ElfError::Modify("No dynamic section found; can't add runpath".to_string())
         })?;
+        prefer_runpath(dynamic);
         let mut found = false;
         for entry in dynamic.iter_mut() {
             let build::elf::Dynamic::String { tag, val } = entry else {
@@ -319,6 +325,16 @@ impl<'data> Writer<'data> {
             *val = name;
             self.modified = true;
         }
+
+        // Version requirements (`.gnu.version_r`) name the library they are needed
+        // from. The dynamic loader looks that name up among the loaded `DT_NEEDED`
+        // objects, so it must follow the rename.
+        for file in &mut self.builder.version_files {
+            if let Some(name) = names.get(file.name.as_slice()) {
+                file.name = name.clone().into();
+                self.modified = true;
+            }
+        }
         Ok(())
     }
 
@@ -357,8 +373,18 @@ impl<'data> Writer<'data> {
         Ok(())
     }
 
+    /// The soname is only read and written for shared objects.
+    fn is_shared_object(&self) -> bool {
+        self.builder.header.e_type == elf::ET_DYN
+    }
+
     /// Find the `DT_SONAME` entry in the dynamic section.
+    ///
+    /// Returns `None` for files that are not shared objects.
     pub fn elf_soname(&self) -> Option<&[u8]> {
+        if !self.is_shared_object() {
+            return None;
+        }
         let id = self.builder.dynamic_section()?;
         let section = self.builder.sections.get(id);
         let build::elf::SectionData::Dynamic(dynamic) = &section.data else {
@@ -378,7 +404,16 @@ impl<'data> Writer<'data> {
     }
 
     /// Set the `DT_SONAME` entry in the dynamic section.
+    ///
+    /// Only shared objects (`ET_DYN`, which includes position-independent
+    /// executables) have a soname: nothing reads it in an `ET_EXEC` file, which
+    /// cannot be linked against. So this fails for other files.
     pub fn elf_set_soname(&mut self, soname: Vec<u8>) -> Result<()> {
+        if !self.is_shared_object() {
+            return Err(ElfError::Modify(
+                "not a shared object (ET_DYN); only shared objects have a soname".into(),
+            ));
+        }
         let dynamic = self.builder.dynamic_data_mut().ok_or_else(|| {
             ElfError::Modify("No dynamic section found; can't set soname".to_string())
         })?;
@@ -406,8 +441,11 @@ impl<'data> Writer<'data> {
     }
 
     /// Find the interpreter path in the `PT_INTERP` segment.
+    ///
+    /// The NUL terminator stored in the section is not included.
     pub fn elf_interpreter(&self) -> Option<&[u8]> {
-        self.builder.interp_data()
+        let data = self.builder.interp_data()?;
+        Some(data.split(|&b| b == 0).next().unwrap_or(data))
     }
 
     /// Set the interpreter path in the `PT_INTERP` segment.
@@ -430,14 +468,14 @@ impl<'data> Writer<'data> {
     pub fn elf_set_osabi(&mut self, abi_name: &str) -> Result<()> {
         let header = &mut self.builder.header;
 
-        // lowercase the name
-        let abi_name = abi_name.to_lowercase();
+        // Case-insensitive, surrounding whitespace ignored.
+        let abi_name = abi_name.trim().to_lowercase();
 
         let new_abi = match abi_name.as_str() {
-            "sysv" => elf::ELFOSABI_SYSV,
-            "hpux" => elf::ELFOSABI_HPUX,
+            "sysv" | "system v" | "system-v" => elf::ELFOSABI_SYSV,
+            "hpux" | "hp-ux" => elf::ELFOSABI_HPUX,
             "netbsd" => elf::ELFOSABI_NETBSD,
-            "linux" => elf::ELFOSABI_LINUX,
+            "linux" | "gnu" => elf::ELFOSABI_LINUX,
             "hurd" | "gnu-hurd" | "gnu hurd" => elf::ELFOSABI_HURD,
             "solaris" => elf::ELFOSABI_SOLARIS,
             "aix" => elf::ELFOSABI_AIX,
@@ -461,6 +499,9 @@ impl<'data> Writer<'data> {
     }
 
     /// Remove from the DT_RUNPATH or DT_RPATH all directories that do not contain a library referenced by DT_NEEDED.
+    ///
+    /// A `DT_RPATH` becomes a `DT_RUNPATH` unless the file has both. A file
+    /// without either is left unchanged.
     pub fn elf_shrink_rpath(&mut self, allowed_rpath_prefixes: Vec<String>) -> Result<()> {
         let endian = self.builder.endian;
         let e_machine = self.builder.header.e_machine;
@@ -471,6 +512,7 @@ impl<'data> Writer<'data> {
         let dynamic = self.builder.dynamic_data_mut().ok_or_else(|| {
             ElfError::Modify("No dynamic section found; can't shrink rpath".to_string())
         })?;
+        prefer_runpath(dynamic);
         let mut found = false;
         for entry in dynamic.iter_mut() {
             let build::elf::Dynamic::String { tag, val } = entry else {
@@ -537,10 +579,10 @@ impl<'data> Writer<'data> {
             let new_rpath = rpath_vec.join(":");
             *val.to_mut() = ByteString::from(new_rpath.as_bytes()).to_vec();
         }
-        if !found {
-            return Err(ElfError::Modify("No DT_RPATH entry found".to_string()));
+        // A file without a search path is left as it is.
+        if found {
+            self.modified = true;
         }
-        self.modified = true;
         Ok(())
     }
 
@@ -572,7 +614,17 @@ impl<'data> Writer<'data> {
     }
 
     /// Clear the symbol version information for a symbol
+    ///
+    /// Fails if the file has no symbol versions (`.gnu.version`).
     pub fn elf_clear_symbol_version(&mut self, symbol: &str) -> Result<()> {
+        let has_versions = self
+            .builder
+            .sections
+            .iter()
+            .any(|section| matches!(section.data, build::elf::SectionData::GnuVersym));
+        if !has_versions {
+            return Err(ElfError::MissingSection(".gnu.version"));
+        }
         let symbols = &mut self.builder.dynamic_symbols;
 
         let mut found = false;
@@ -656,17 +708,20 @@ impl<'data> Writer<'data> {
     }
 
     /// Write the builded/patched ELF file to a path.
+    ///
+    /// The whole file is serialized in memory before `path` is opened, so an error
+    /// while laying out or serializing the file leaves `path` untouched. `path` is
+    /// then overwritten in place, which keeps its inode, permissions, ownership and
+    /// hard links.
     pub fn write_to_path(&mut self, path: &Path) -> Result<()> {
-        let file_writer = fs::File::create(path).map_err(ElfError::Io)?;
-
         self.elf_finalize()?;
-        let mut buffer = object::write::StreamingBuffer::new(file_writer);
-        let new_builder = build::elf::Builder::new(self.builder.endian, self.builder.is_64);
 
+        let new_builder = build::elf::Builder::new(self.builder.endian, self.builder.is_64);
         let builder = mem::replace(&mut self.builder, new_builder);
 
-        builder.write(&mut buffer).map_err(ElfError::Write)?;
-        buffer.result().map_err(ElfError::Io)
+        let mut data = Vec::new();
+        builder.write(&mut data).map_err(ElfError::Write)?;
+        fs::write(path, data).map_err(ElfError::Io)
     }
 
     /// Delete symbols from the symbol table.
@@ -745,6 +800,23 @@ impl<'data> Writer<'data> {
             elf::EM_SPARC | elf::EM_SPARCV9 => 0x2000,
             // 4096 (default)
             _ => 0x1000,
+        }
+    }
+}
+
+/// Change `DT_RPATH` entries to `DT_RUNPATH` if there is no `DT_RUNPATH`, so
+/// that `LD_LIBRARY_PATH` takes precedence and the path does not apply to the
+/// dependencies' dependencies. When both are present, both are kept.
+fn prefer_runpath(dynamic: &mut [build::elf::Dynamic<'_>]) {
+    let is = |entry: &build::elf::Dynamic<'_>, wanted| matches!(entry, build::elf::Dynamic::String { tag, .. } if *tag == wanted);
+    if dynamic.iter().any(|entry| is(entry, elf::DT_RUNPATH)) {
+        return;
+    }
+    for entry in dynamic.iter_mut() {
+        if let build::elf::Dynamic::String { tag, .. } = entry {
+            if *tag == elf::DT_RPATH {
+                *tag = elf::DT_RUNPATH;
+            }
         }
     }
 }

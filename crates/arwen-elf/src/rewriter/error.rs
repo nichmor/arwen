@@ -15,9 +15,12 @@ pub enum ElfError {
     #[error("A validation error occurred while writing the file")]
     /// An error occurred while writing the file.
     Write(build::Error),
-    #[error("A validation error occurred while modifying the file")]
-    /// An error occurred while modifying the file.
+    #[error("cannot modify the file: {0}")]
+    /// The modification cannot be applied to this file.
     Modify(String),
+    #[error("cannot find section '{0}'")]
+    /// The file has no section that the operation needs.
+    MissingSection(&'static str),
     #[error("Non-UTF-8 DT_NEEDED entry")]
     /// The `DT_NEEDED` entry is not UTF-8 encoded
     InvalidDtNeededEncoding(#[source] FromUtf8Error),

@@ -76,6 +76,7 @@ dependencies = [
  "arwen-elf",
  "arwen-macho",
  "clap",
+ "goblin",
  "insta",
  "rstest",
  "tempfile",

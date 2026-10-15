@@ -135,12 +135,14 @@ jobs:
           key: ${{ hashFiles('pixi.lock') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
+      # The ELF integration tests and the python tests compare against patchelf.
+      - name: Install patchelf
+        run: sudo apt-get install -y patchelf
+
       - name: Test arwen with cargo
         run: |
           pixi run test
 
-      - name: Install patchelf
-        run: sudo apt-get install -y patchelf
       - name: Test arwen using python tests
         run: pixi run test-py
 

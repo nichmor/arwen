@@ -1,13 +1,8 @@
-use std::process::{Command, Output};
+#[cfg(target_os = "macos")]
+use std::process::Command;
 
-pub fn run_command(cmd: &str, args: &[&str]) -> std::io::Result<Output> {
-    let output = Command::new(cmd).args(args).output()?;
-
-    if !output.status.success() {
-        eprintln!("Command {cmd:?} failed");
-    }
-    Ok(output)
-}
+#[cfg(target_os = "macos")]
+use crate::common::run_command;
 
 #[cfg(target_os = "macos")]
 pub(crate) fn codesign_binary(base_binary: &str) -> std::io::Result<()> {

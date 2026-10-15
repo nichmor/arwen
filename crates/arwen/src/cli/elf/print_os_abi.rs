@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-/// Print the OS ABI of the elf file
+/// Print the OS ABI of the elf file (e.g. `System V`, `Linux`)
 #[derive(Parser, Debug)]
 pub struct Args {
     /// Path to the file to change

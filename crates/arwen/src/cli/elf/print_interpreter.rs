@@ -14,7 +14,7 @@ pub fn execute(args: Args) -> Result<(), arwen_elf::ElfError> {
 
     let mut elf = arwen_elf::ElfContainer::parse(&bytes_of_file)?;
 
-    elf.print_interpreter();
+    elf.print_interpreter()?;
 
     Ok(())
 }

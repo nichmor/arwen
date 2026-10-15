@@ -4,11 +4,10 @@ use std::path::PathBuf;
 use rstest::rstest;
 use tempfile::tempdir;
 
-#[cfg(not(target_os = "macos"))]
-use crate::macho::common::run_command;
+use crate::common::{run_command, ARWEN};
 
 #[cfg(target_os = "macos")]
-use crate::macho::common::{calculate_md5_hash, codesign_binary, run_command};
+use crate::macho::common::{calculate_md5_hash, codesign_binary};
 
 use super::common::Tool;
 
@@ -24,7 +23,7 @@ fn add_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
             run_command(INSTALL_NAME_TOOL, &["-add_rpath", "new_graf", base_binary]).unwrap();
         }
         Tool::Arwen => {
-            run_command("arwen", &["macho", "add-rpath", "new_graf", base_binary]).unwrap();
+            run_command(ARWEN, &["macho", "add-rpath", "new_graf", base_binary]).unwrap();
         }
     };
 
@@ -41,11 +40,7 @@ fn remove_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
             .unwrap();
         }
         Tool::Arwen => {
-            run_command(
-                "arwen",
-                &["macho", "delete-rpath", "path_graf", base_binary],
-            )
-            .unwrap();
+            run_command(ARWEN, &["macho", "delete-rpath", "path_graf", base_binary]).unwrap();
         }
     };
 
@@ -63,7 +58,7 @@ fn change_rpath(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
         }
         Tool::Arwen => {
             run_command(
-                "arwen",
+                ARWEN,
                 &[
                     "macho",
                     "change-rpath",
@@ -94,7 +89,7 @@ fn change_install_name(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
         }
         Tool::Arwen => {
             run_command(
-                "arwen",
+                ARWEN,
                 &[
                     "macho",
                     "change-install-name",
@@ -111,7 +106,7 @@ fn change_install_name(base_binary: &str, tool: &Tool) -> std::io::Result<()> {
 }
 
 #[rstest]
-fn test_add_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
+fn test_add_rpath(#[files("../../tests/data/macho/*/exec/*")] bin_path: PathBuf) {
     let temp_folder = tempdir().unwrap().path().join("test_add_rpath");
 
     // let temp_folder = std::env::current_dir().unwrap();
@@ -158,7 +153,7 @@ fn test_add_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
 }
 
 #[rstest]
-fn test_remove_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
+fn test_remove_rpath(#[files("../../tests/data/macho/*/exec/*")] bin_path: PathBuf) {
     let temp_folder = tempdir().unwrap().path().join("test_remove_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
@@ -203,7 +198,7 @@ fn test_remove_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
 }
 
 #[rstest]
-fn test_change_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
+fn test_change_rpath(#[files("../../tests/data/macho/*/exec/*")] bin_path: PathBuf) {
     let temp_folder = tempdir().unwrap().path().join("test_change_rpath");
     fs::create_dir_all(&temp_folder).unwrap();
 
@@ -248,7 +243,7 @@ fn test_change_rpath(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
 }
 
 #[rstest]
-fn test_change_install_name(#[files("tests/data/macho/*/exec/*")] bin_path: PathBuf) {
+fn test_change_install_name(#[files("../../tests/data/macho/*/exec/*")] bin_path: PathBuf) {
     let temp_folder = tempdir().unwrap().path().join("test_change_install_name");
     fs::create_dir_all(&temp_folder).unwrap();
 

@@ -1,4 +1,6 @@
 import os
+
+import pytest
 from arwen.elf import ElfContainer
 
 
@@ -94,13 +96,21 @@ def test_get_os_abi(elf_bin):
     assert isinstance(os_abi, int)
 
 
-def test_set_soname(elf_bin):
-    elf = ElfContainer.from_path(elf_bin)
+def test_set_soname(elf_lib):
+    elf = ElfContainer.from_path(elf_lib)
     elf.set_soname("new_soname")
     soname = elf.get_soname()
     # Verify the SONAME was set
     # and we can get it
     assert soname == "new_soname"
+
+
+def test_set_soname_of_executable_fails(elf_bin):
+    # Executables (ET_EXEC) have no soname.
+    elf = ElfContainer.from_path(elf_bin)
+    with pytest.raises(Exception, match="not a shared object"):
+        elf.set_soname("new_soname")
+    assert elf.get_soname() is None
 
 
 def test_no_default_lib(elf_bin):

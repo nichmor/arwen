@@ -1,4 +1,7 @@
-use arwen_elf::ElfError;
+use std::fs;
+use std::path::Path;
+
+use arwen_elf::{ElfContainer, ElfError};
 
 use super::ElfCommand;
 
@@ -54,4 +57,16 @@ pub fn execute(elf: ElfCommand) -> Result<(), ElfError> {
         ElfCommand::PrintExecStack(args) => print_execstack::execute(args),
         ElfCommand::SetPageSize(args) => set_page_size::execute(args),
     }
+}
+
+/// Patch the ELF file at `path`: apply `edit`, then write the result. The file
+/// is not written to if `edit` or laying out the result fails.
+fn patch(
+    path: &Path,
+    edit: impl FnOnce(&mut ElfContainer) -> Result<(), ElfError>,
+) -> Result<(), ElfError> {
+    let bytes = fs::read(path)?;
+    let mut elf = ElfContainer::parse(&bytes)?;
+    edit(&mut elf)?;
+    elf.write_to_path(path)
 }
